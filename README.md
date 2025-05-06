@@ -1,6 +1,6 @@
 # Kontoauszug-Auswertung
 
-Ein Python-Tool zur automatischen Auswertung von Kontoauszügen im CSV-Format.
+Ein Python-Tool zur automatischen Auswertung von Kontoauszügen im CSV-Format. Kombatibel mit DKB Exports im CSV Format.
 
 ## Funktionen
 
