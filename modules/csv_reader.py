@@ -33,7 +33,7 @@ class BankStatementReader:
         header_line_index = self._find_header_line(content)
         lines = content.split("\n")[header_line_index:]
 
-        csv_reader = csv.DictReader(lines, delimiter=";")
+        csv_reader = csv.DictReader(lines, delimiter=",")
 
         for row in csv_reader:
             if self._is_valid_transaction_row(row):
@@ -50,14 +50,30 @@ class BankStatementReader:
         raise ValueError("Header-Zeile mit Buchungsdatum nicht gefunden")
 
     def _is_valid_transaction_row(self, row):
-        return (
-            row.get(self.amount_column, "").strip()
-            and row.get(self.date_column, "").strip()
-            and (
-                row.get(self.recipient_column, "").strip()
-                or row.get(self.sender_column, "").strip()
-            )
-        )
+        missing_fields = []
+        
+        if not row.get(self.amount_column, '').strip():
+            missing_fields.append(f"Betrag ({self.amount_column})")
+        
+        if not row.get(self.date_column, '').strip():
+            missing_fields.append(f"Datum ({self.date_column})")
+        
+        has_recipient = row.get(self.recipient_column, '').strip()
+        has_sender = row.get(self.sender_column, '').strip()
+        
+        if not has_recipient and not has_sender:
+            missing_fields.append(f"Sender oder Empfänger ({self.sender_column}/{self.recipient_column})")
+        
+        if missing_fields:
+            print(f"⚠️  Ungültige Transaktion übersprungen - Fehlende Felder: {', '.join(missing_fields)}")
+            if row.get(self.date_column, '').strip():
+                print(f"   Datum: {row.get(self.date_column, 'Unbekannt')}")
+            if row.get(self.amount_column, '').strip():
+                print(f"   Betrag: {row.get(self.amount_column, 'Unbekannt')}")
+            print()
+            return False
+        
+        return True
 
     def _create_transaction_from_row(self, row):
         amount_str = row[self.amount_column].replace(",", ".")
