@@ -5,16 +5,20 @@ from datetime import datetime
 
 
 class CsvExporter:
-    def __init__(self):
-        self.output_directory = "output"
+    def __init__(self, output_directory: str):
+        self.output_directory = output_directory
         self.archive_directory = os.path.join(self.output_directory, "archiv")
 
     def export_for_excel(self, settlement_result, transactions):
         self._archive_old_files()
 
-        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-        filename = f"abrechnung_import_{timestamp}.csv"
-        filepath = os.path.join(self.output_directory, filename)
+        timestamp = datetime.now().strftime("%Y-%m-%d")
+        filename = f"abrechnung_{timestamp}.csv"
+        
+        filepath = os.path.join(self.output_directory, timestamp, filename)
+        
+        if not os.path.exists(os.path.dirname(filepath)):
+            os.makedirs(os.path.dirname(filepath))
 
         with open(filepath, "w", newline="", encoding="utf-8") as csvfile:
             writer = csv.writer(csvfile, delimiter=";")

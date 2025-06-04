@@ -36,10 +36,10 @@ except ImportError as e:
     sys.exit(1)
 
 
-def find_latest_bank_statement():
-    csv_files = glob.glob("input/*.csv")
+def find_latest_bank_statement(input_folder: str):
+    csv_files = glob.glob(f"{input_folder}/*.csv")
     if not csv_files:
-        raise FileNotFoundError("Keine CSV-Dateien im input/ Ordner gefunden")
+        raise FileNotFoundError(f"Keine CSV-Dateien im Ordner {input_folder} gefunden")
 
     latest_file = max(csv_files, key=os.path.getctime)
     return latest_file
@@ -49,15 +49,29 @@ def create_directories():
     directories = ["input", "output", "output/archiv", "modules", "config"]
     for directory in directories:
         os.makedirs(directory, exist_ok=True)
+        
+def read_config_file(file_path):
+    # contains: input_folder, output_folder
+    if not os.path.exists(file_path):
+        raise FileNotFoundError(f"Konfigurationsdatei {file_path} nicht gefunden")
+    with open(file_path, 'r', encoding='utf-8') as file:
+        config = yaml.safe_load(file)
+    return config
 
 
 def main():
     print("=== Monatsabrechnung Programm ===\n")
 
     create_directories()
+    
+    config_file = "config.yaml"
+    config = read_config_file(config_file)
+    print(f"Konfiguration geladen: {config_file}")
 
     try:
-        latest_statement_file = find_latest_bank_statement()
+        latest_statement_file = find_latest_bank_statement(config['input_folder'])
+        if not latest_statement_file:
+            raise FileNotFoundError("Keine gültige Kontoauszug-Datei gefunden")
         print(f"Verwende Kontoauszug: {latest_statement_file}")
 
         settings = Settings()
@@ -65,7 +79,7 @@ def main():
         transaction_filter = TransactionFilter(settings)
         calculator = SettlementCalculator()
         report_generator = ReportGenerator()
-        csv_exporter = CsvExporter()
+        csv_exporter = CsvExporter(config['output_folder'])
 
         raw_transactions = reader.read_csv(latest_statement_file)
         print(f"Gefunden: {len(raw_transactions)} Transaktionen")

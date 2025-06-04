@@ -1,6 +1,7 @@
 # Sensible Daten - Kontoauszüge und Abrechnungen
 input/
 output/
+config.yaml
 
 # Persönliche Konfiguration
 config/allowlist.yaml
