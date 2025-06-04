@@ -78,7 +78,7 @@ def main():
         reader = BankStatementReader(delimiter=config.get('csv_delimiter'))
         transaction_filter = TransactionFilter(settings)
         calculator = SettlementCalculator()
-        report_generator = ReportGenerator()
+        report_generator = ReportGenerator(config['output_folder'])
         csv_exporter = CsvExporter(config['output_folder'])
 
         raw_transactions = reader.read_csv(latest_statement_file)

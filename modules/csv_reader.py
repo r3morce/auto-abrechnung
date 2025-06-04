@@ -16,13 +16,14 @@ class Transaction:
 
 
 class BankStatementReader:
-    def __init__(self):
+    def __init__(self, delimiter: str):
         self.amount_column = "Betrag (€)"
         self.date_column = "Buchungsdatum"
         self.sender_column = "Zahlungspflichtige*r"
         self.recipient_column = "Zahlungsempfänger*in"
         self.type_column = "Umsatztyp"
         self.description_column = "Verwendungszweck"
+        self.delimiter = delimiter
 
     def read_csv(self, file_path):
         transactions = []
@@ -33,7 +34,7 @@ class BankStatementReader:
         header_line_index = self._find_header_line(content)
         lines = content.split("\n")[header_line_index:]
 
-        csv_reader = csv.DictReader(lines, delimiter=",")
+        csv_reader = csv.DictReader(lines, delimiter=self.delimiter)
 
         for row in csv_reader:
             if self._is_valid_transaction_row(row):

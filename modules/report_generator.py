@@ -4,16 +4,23 @@ from datetime import datetime
 
 
 class ReportGenerator:
-    def __init__(self):
-        self.output_directory = "output"
+    def __init__(self, output_directory: str):
+        self.output_directory = output_directory
         self.archive_directory = os.path.join(self.output_directory, "archiv")
 
     def generate_report(self, settlement_result, transactions):
         self._archive_old_files()
 
-        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-        filename = f"monatsabrechnung_{timestamp}.txt"
-        filepath = os.path.join(self.output_directory, filename)
+        start_date = min(t.date for t in transactions).strftime("%Y-%m-%d")
+        end_date = max(t.date for t in transactions).strftime("%Y-%m-%d")
+        
+        filename = f"monatsabrechnung_{start_date}_{end_date}.txt"
+        foldername = f"{start_date}_{end_date}"
+        
+        filepath = os.path.join(self.output_directory, foldername, filename)
+        
+        if not os.path.exists(os.path.dirname(filepath)):
+            os.makedirs(os.path.dirname(filepath))
 
         with open(filepath, "w", encoding="utf-8") as file:
             self._write_header(file)
