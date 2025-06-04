@@ -75,7 +75,7 @@ def main():
         print(f"Verwende Kontoauszug: {latest_statement_file}")
 
         settings = Settings()
-        reader = BankStatementReader()
+        reader = BankStatementReader(delimiter=config.get('csv_delimiter'))
         transaction_filter = TransactionFilter(settings)
         calculator = SettlementCalculator()
         report_generator = ReportGenerator()
