@@ -25,6 +25,42 @@ make run
 - PyYAML
 - Make (optional, aber empfohlen)
 
+## 🔧 OS-spezifisches Setup
+
+**Wichtig:** Beim ersten Checkout des Projekts muss das richtige Makefile für dein Betriebssystem eingerichtet werden:
+
+### Automatisch (empfohlen):
+
+**Linux/macOS:**
+```bash
+./setup.sh
+```
+
+**Windows:**
+```cmd
+setup.bat
+```
+
+### Manuell:
+
+**Linux/macOS:**
+```bash
+# Lösche Windows-spezifisches Makefile
+rm Makefile.windows
+
+# Benenne Linux-Makefile um
+mv Makefile.linux Makefile
+```
+
+**Windows:**
+```cmd
+# Lösche Linux-spezifisches Makefile
+del Makefile.linux
+
+# Benenne Windows-Makefile um
+ren Makefile.windows Makefile
+```
+
 ## 🛠️ Installation
 
 ### Mit Make (empfohlen)

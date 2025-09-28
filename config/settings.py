@@ -13,6 +13,8 @@ class Settings:
         try:
             with open(allowlist_file, "r", encoding="utf-8") as file:
                 data = yaml.safe_load(file)
+                if data is None:
+                    return self._get_default_allowlist()
                 return data.get("income_senders", [])
         except FileNotFoundError:
             print(f"Warnung: {allowlist_file} nicht gefunden. Verwende Standard-Liste.")
@@ -26,6 +28,8 @@ class Settings:
         try:
             with open(blocklist_file, "r", encoding="utf-8") as file:
                 data = yaml.safe_load(file)
+                if data is None:
+                    return self._get_default_blocklist()
                 return data.get("expense_recipients", [])
         except FileNotFoundError:
             print(f"Warnung: {blocklist_file} nicht gefunden. Verwende Standard-Liste.")

@@ -13,12 +13,12 @@ class ReportGenerator:
 
         start_date = min(t.date for t in transactions).strftime("%Y-%m-%d")
         end_date = max(t.date for t in transactions).strftime("%Y-%m-%d")
-        
+
         filename = f"monatsabrechnung_{start_date}_{end_date}.txt"
         foldername = f"{start_date}_{end_date}"
-        
+
         filepath = os.path.join(self.output_directory, foldername, filename)
-        
+
         if not os.path.exists(os.path.dirname(filepath)):
             os.makedirs(os.path.dirname(filepath))
 

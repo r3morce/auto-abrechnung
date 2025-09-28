@@ -52,28 +52,32 @@ class BankStatementReader:
 
     def _is_valid_transaction_row(self, row):
         missing_fields = []
-        
-        if not row.get(self.amount_column, '').strip():
+
+        if not row.get(self.amount_column, "").strip():
             missing_fields.append(f"Betrag ({self.amount_column})")
-        
-        if not row.get(self.date_column, '').strip():
+
+        if not row.get(self.date_column, "").strip():
             missing_fields.append(f"Datum ({self.date_column})")
-        
-        has_recipient = row.get(self.recipient_column, '').strip()
-        has_sender = row.get(self.sender_column, '').strip()
-        
+
+        has_recipient = row.get(self.recipient_column, "").strip()
+        has_sender = row.get(self.sender_column, "").strip()
+
         if not has_recipient and not has_sender:
-            missing_fields.append(f"Sender oder Empfänger ({self.sender_column}/{self.recipient_column})")
-        
+            missing_fields.append(
+                f"Sender oder Empfänger ({self.sender_column}/{self.recipient_column})"
+            )
+
         if missing_fields:
-            print(f"⚠️  Ungültige Transaktion übersprungen - Fehlende Felder: {', '.join(missing_fields)}")
-            if row.get(self.date_column, '').strip():
+            print(
+                f"⚠️  Ungültige Transaktion übersprungen - Fehlende Felder: {', '.join(missing_fields)}"
+            )
+            if row.get(self.date_column, "").strip():
                 print(f"   Datum: {row.get(self.date_column, 'Unbekannt')}")
-            if row.get(self.amount_column, '').strip():
+            if row.get(self.amount_column, "").strip():
                 print(f"   Betrag: {row.get(self.amount_column, 'Unbekannt')}")
             print()
             return False
-        
+
         return True
 
     def _create_transaction_from_row(self, row):
