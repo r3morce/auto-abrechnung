@@ -27,38 +27,10 @@ make run
 
 ## 🔧 OS-spezifisches Setup
 
-**Wichtig:** Beim ersten Checkout des Projekts muss das richtige Makefile für dein Betriebssystem eingerichtet werden:
+**Wichtig:** Beim ersten Checkout des Projekts führe das Setup-Script aus:
 
-### Automatisch (empfohlen):
-
-**Linux/macOS:**
 ```bash
 ./setup.sh
-```
-
-**Windows:**
-```cmd
-setup.bat
-```
-
-### Manuell:
-
-**Linux/macOS:**
-```bash
-# Lösche Windows-spezifisches Makefile
-rm Makefile.windows
-
-# Benenne Linux-Makefile um
-mv Makefile.linux Makefile
-```
-
-**Windows:**
-```cmd
-# Lösche Linux-spezifisches Makefile
-del Makefile.linux
-
-# Benenne Windows-Makefile um
-ren Makefile.windows Makefile
 ```
 
 ## 🛠️ Installation
@@ -165,9 +137,6 @@ make setup       # Projekt komplett einrichten
 make run         # Abrechnung ausführen
 make clean       # Temporäre Dateien löschen
 make archive     # Output manuell archivieren
-make test        # Tests ausführen
-make lint        # Code-Qualität prüfen
-make format      # Code formatieren
 ```
 
 ## 📈 Beispiel-Ausgabe

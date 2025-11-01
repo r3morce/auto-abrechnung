@@ -1,6 +1,6 @@
 # Makefile für Monatsabrechnung
 
-.PHONY: help setup install run clean archive test lint format check
+.PHONY: help setup install run clean archive
 
 # Standard target
 help:
@@ -10,10 +10,6 @@ help:
 	@echo "  run       - Monatsabrechnung ausführen"
 	@echo "  clean     - Temporäre Dateien löschen"
 	@echo "  archive   - Output manuell archivieren"
-	@echo "  test      - Tests ausführen"
-	@echo "  lint      - Code-Qualität prüfen"
-	@echo "  format    - Code formatieren"
-	@echo "  check     - Vollständige Code-Prüfung"
 
 # Projekt einrichten
 setup: venv install dirs config
@@ -30,7 +26,6 @@ venv:
 install:
 	@echo "📥 Installiere Dependencies..."
 	pip install pyyaml
-	pip install flake8 black pytest
 
 # Verzeichnisse erstellen
 dirs:
@@ -67,30 +62,6 @@ archive:
 	@mv output/monatsabrechnung_*.txt output/archiv/ 2>/dev/null || true
 	@mv output/abrechnung_import_*.csv output/archiv/ 2>/dev/null || true
 	@echo "✅ Dateien archiviert"
-
-# Tests ausführen
-test:
-	@echo "🧪 Führe Tests aus..."
-	python3 -m pytest tests/ -v
-
-# Code-Qualität prüfen
-lint:
-	@echo "🔍 Prüfe Code-Qualität..."
-	flake8 main.py modules/ config/ --max-line-length=100
-
-# Code formatieren
-format:
-	@echo "✨ Formatiere Code..."
-	black main.py modules/ config/ --line-length=100
-
-# Vollständige Prüfung
-check: lint test
-	@echo "✅ Code-Prüfung abgeschlossen"
-
-# Development setup (mit dev dependencies)
-dev-setup: setup
-	@echo "👨‍💻 Installiere Development Tools..."
-	pip install pytest black flake8 mypy
 
 # Requirements.txt erstellen
 freeze:
