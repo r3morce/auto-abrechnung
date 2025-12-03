@@ -2,6 +2,16 @@
 input/
 output/
 config.yaml
+settlement_config.yaml
+!settlement_config.example.yaml
+
+# Settlement expense data (keep directory structure)
+input/expenses/*.csv
+!input/expenses/example.csv
+output/settlements/**/settlement_*.csv
+output/settlements/**/settlement_*.txt
+!input/expenses/.gitkeep
+!output/settlements/.gitkeep
 
 # Persönliche Konfiguration
 config/allowlist.yaml

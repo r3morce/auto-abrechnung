@@ -1,20 +1,29 @@
 # Makefile für Monatsabrechnung
 
-.PHONY: help setup install run clean archive
+.PHONY: help setup install run clean archive settlement settlement-run settlement-setup settlement-clean
 
 # Standard target
 help:
 	@echo "Verfügbare Commands:"
+	@echo ""
+	@echo "Bank Statement Processing:"
 	@echo "  setup     - Projekt komplett einrichten (venv + deps + dirs)"
 	@echo "  install   - Dependencies installieren"
 	@echo "  run       - Monatsabrechnung ausführen"
 	@echo "  clean     - Temporäre Dateien löschen"
 	@echo "  archive   - Output manuell archivieren"
+	@echo ""
+	@echo "Personal Expense Settlement:"
+	@echo "  settlement-setup  - Settlement-Verzeichnisse erstellen"
+	@echo "  settlement-run    - Settlement-Abrechnung ausführen"
+	@echo "  settlement-clean  - Settlement-Archiv leeren"
+	@echo "  settlement        - Alias für settlement-run"
 
 # Projekt einrichten
-setup: venv install dirs config
+setup: venv install dirs config settlement-setup
 	@echo "✅ Projekt ist bereit!"
 	@echo "Führe 'make run' aus um die Abrechnung zu starten"
+	@echo "Führe 'make settlement-run' aus um die Settlement-Abrechnung zu starten"
 
 # Virtual Environment erstellen
 venv:
@@ -35,6 +44,9 @@ dirs:
 	@mkdir -p output/archiv
 	@mkdir -p config
 	@mkdir -p modules
+	@mkdir -p input/expenses
+	@mkdir -p output/settlements
+	@mkdir -p output/settlements/archiv
 
 # Beispiel-Konfiguration erstellen
 config:
@@ -72,3 +84,22 @@ freeze:
 install-deps:
 	@echo "📥 Installiere aus requirements.txt..."
 	pip install -r requirements.txt
+
+# Settlement-specific targets
+settlement-setup:
+	@echo "📋 Einrichten Settlement-Funktionalität..."
+	@mkdir -p input/expenses
+	@mkdir -p output/settlements
+	@mkdir -p output/settlements/archiv
+	@[ ! -f "settlement_config.yaml" ] && echo "⚠️  settlement_config.yaml fehlt - bitte erstellen!" || echo "✓ settlement_config.yaml gefunden"
+	@echo "✅ Settlement-Verzeichnisse bereit!"
+
+settlement-run: settlement
+settlement:
+	@echo "💰 Starte Settlement-Abrechnung..."
+	@python3 settlement.py
+
+settlement-clean:
+	@echo "🧹 Lösche Settlement-Archiv..."
+	@rm -rf output/settlements/archiv/* 2>/dev/null || true
+	@echo "✅ Settlement-Archiv geleert"

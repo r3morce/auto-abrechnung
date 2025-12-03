@@ -1,202 +1,169 @@
 # 💰 Monatsabrechnung
 
-Ein Python-Programm zur automatischen Aufteilung von Monatskosten zwischen zwei Personen basierend auf Bankkontoauszügen der DKB.
+Automatische Aufteilung von Monatskosten zwischen zwei Personen.
 
-## 🎯 Zweck
-
-Das Programm liest Kontoauszüge ein und teilt alle relevanten Ausgaben 50/50 auf. Einnahmen werden berücksichtigt und reduzieren die zu teilenden Kosten. Am Ende zahlt jeder die Hälfte der Nettoausgaben.
+**Zwei Modi:**
+1. **Bank Statement** - DKB-Kontoauszüge automatisch aufteilen
+2. **Personal Expenses** - Manuelle Ausgaben 50/50 teilen
 
 ## ⚡ Schnellstart
 
 ```bash
-# Projekt einrichten
-make setup
-
-# CSV-Datei in input/ Ordner legen
-# Konfiguration anpassen (siehe unten)
-
-# Abrechnung ausführen
-make run
+make setup              # Projekt einrichten
+make run                # Bank-Abrechnung
+make settlement         # Personal-Abrechnung
 ```
 
 ## 📋 Voraussetzungen
 
 - Python 3.7+
-- PyYAML
-- Make (optional, aber empfohlen)
+- PyYAML (`pip install pyyaml`)
 
-## 🔧 OS-spezifisches Setup
+## 🔧 Verfügbare Commands
 
-**Wichtig:** Beim ersten Checkout des Projekts führe das Setup-Script aus:
-
+### Bank Statement Processing
 ```bash
-./setup.sh
+make setup       # Projekt einrichten
+make run         # Abrechnung ausführen
+make archive     # Output archivieren
+make clean       # Temporäre Dateien löschen
 ```
 
-## 🛠️ Installation
-
-### Mit Make (empfohlen)
+### Personal Expense Settlement
 ```bash
-make setup
+make settlement-setup  # Verzeichnisse erstellen
+make settlement        # Abrechnung ausführen
+make settlement-clean  # Archiv leeren
 ```
 
-### Manuell
-```bash
-# Virtual Environment
-python -m venv venv
-venv\Scripts\activate  # Windows
-# source venv/bin/activate  # Linux/Mac
+---
 
-# Dependencies
-pip install pyyaml
+## 🏦 Bank Statement Processing
 
-# Verzeichnisse erstellen
-mkdir input output config modules
-```
+### Setup
+1. Projekt einrichten: `make setup`
+2. Konfigurationsdateien anpassen:
+   - `config/allowlist.yaml` - Erlaubte Eingänge
+   - `config/blocklist.yaml` - Ignorierte Ausgaben
 
-## ⚙️ Konfiguration
+### Konfiguration
 
-Erstelle zwei YAML-Dateien in `config/`:
-
-### `config/allowlist.yaml`
-Eingänge die berücksichtigt werden sollen:
+**`config/allowlist.yaml`** - Welche Eingänge werden berücksichtigt:
 ```yaml
 income_senders:
-  - "Mein Arbeitgeber GmbH"
-  - "Steueramt"
+  - "Arbeitgeber GmbH"
   - "Krankenkasse"
 ```
 
-### `config/blocklist.yaml`
-Ausgaben die NICHT berücksichtigt werden sollen:
+**`config/blocklist.yaml`** - Welche Ausgaben werden ignoriert:
 ```yaml
 expense_recipients:
   - "Hausverwaltung"
   - "Stadtwerke"
   - "Sparkasse"
-  - "Deutsche Bank"
 ```
+
+### Verwendung
+1. CSV-Kontoauszug von Bank herunterladen
+2. In `input/` Ordner legen
+3. `make run` ausführen
+4. Ergebnisse in `output/` prüfen
+
+### CSV-Format (DKB Bank)
+Benötigte Spalten: `Buchungsdatum`, `Zahlungspflichtige*r`, `Zahlungsempfänger*in`, `Betrag (€)`, `Verwendungszweck`, `Umsatztyp`
+
+---
+
+## 💵 Personal Expense Settlement
+
+### Setup
+1. Projekt einrichten: `make setup`
+2. Verzeichnisse erstellen: `make settlement-setup`
+3. Config erstellen: `cp settlement_config.example.yaml settlement_config.yaml`
+4. Config anpassen (Pfade, falls nötig)
+
+### CSV-Format (Personal Expenses)
+
+Siehe `input/expenses/example.csv` als Vorlage. Erstelle CSV-Datei in `input/expenses/`:
+
+```csv
+person;amount;comment
+a;45,50;Supermarkt
+b;120,00;Elektronik
+a;30,00;Tankstelle
+```
+
+**Felder:**
+- `person` - 'a' oder 'b' (case-insensitive)
+- `amount` - Betrag (Dezimalformat gemäß `csv_delimiter` in config)
+- `comment` - Optional
+
+**Hinweis:** Trennzeichen muss mit `csv_delimiter` in `settlement_config.yaml` übereinstimmen
+
+### Konfiguration
+
+Kopiere `settlement_config.example.yaml` zu `settlement_config.yaml` und passe an:
+
+**`settlement_config.yaml`:**
+```yaml
+input_folder: input/expenses          # Eingabe-Ordner
+output_folder: output/settlements     # Ausgabe-Ordner
+csv_delimiter: ";"                    # CSV-Trennzeichen (Semikolon oder Komma)
+input_encoding: "utf-8"               # Zeichenkodierung
+auto_find_latest: true                # Automatisch neueste Datei verwenden
+valid_persons:
+  - a                                 # Erlaubte Personen-Kennungen
+  - b
+generate_text_report: true            # TXT-Report generieren
+generate_csv_report: true             # CSV-Report generieren
+archive_old_files: true               # Alte Dateien archivieren
+```
+
+### Verwendung
+1. CSV-Datei in `input/expenses/` erstellen
+2. `make settlement` ausführen
+3. Ergebnisse in `output/settlements/` prüfen
+
+### Beispiel-Ausgabe
+```
+Person A:            150.00 €
+Person M:            200.00 €
+------------------------------------------------------------
+Gesamt:              350.00 €
+Pro Person:          175.00 €
+
+AUSGLEICHSZAHLUNG:
+  A zahlt an M: 25.00 €
+```
+
+---
 
 ## 📁 Verzeichnisstruktur
 
 ```
 auto-abrechnung/
-├── main.py                 # Hauptprogramm
+├── main.py                 # Bank Statement Processing
+├── settlement.py           # Personal Expense Settlement
 ├── modules/                # Programmmodule
-│   ├── csv_reader.py      # CSV-Einlesung
-│   ├── transaction_filter.py  # Filterung
-│   ├── settlement_calculator.py  # Berechnung
-│   ├── report_generator.py   # TXT-Report
-│   └── csv_exporter.py    # CSV-Export
-├── config/                 # Konfiguration
-│   ├── settings.py        # Settings-Klasse
-│   ├── allowlist.yaml     # Erlaubte Eingänge (erstellen)
-│   └── blocklist.yaml     # Blockierte Ausgaben (erstellen)
-├── input/                  # Kontoauszüge (CSV-Dateien)
-├── output/                 # Generierte Abrechnungen
-│   └── archiv/            # Archivierte Abrechnungen
-├── Makefile               # Make-Commands
-└── README.md              # Diese Datei
+├── config/                 # Konfigurationsdateien
+├── input/                  # Bank-CSVs
+│   └── expenses/          # Personal Expense CSVs
+└── output/                 # Generierte Reports
+    ├── archiv/
+    └── settlements/
 ```
-
-## 🚀 Verwendung
-
-### 1. Kontoauszug vorbereiten
-- CSV-Datei von der Bank herunterladen
-- In `input/` Ordner legen
-- Das Programm verwendet automatisch die neueste Datei
-
-### 2. Konfiguration prüfen
-- `config/allowlist.yaml` - Eingänge die zählen sollen
-- `config/blocklist.yaml` - Ausgaben die ignoriert werden sollen
-
-### 3. Abrechnung erstellen
-```bash
-make run
-```
-
-### 4. Ergebnisse prüfen
-- **TXT-Report**: `output/monatsabrechnung_TIMESTAMP.txt`
-- **Excel-CSV**: `output/abrechnung_import_TIMESTAMP.csv`
-
-## 📊 CSV-Format (Bankauszug)
-
-Das Programm erwartet CSV-Dateien mit folgenden Spalten:
-- `Buchungsdatum`
-- `Zahlungspflichtige*r` (Sender)
-- `Zahlungsempfänger*in` (Empfänger)
-- `Betrag (€)`
-- `Verwendungszweck`
-- `Umsatztyp`
-
-## 🔧 Make-Commands
-
-```bash
-make help        # Alle verfügbaren Commands anzeigen
-make setup       # Projekt komplett einrichten
-make run         # Abrechnung ausführen
-make clean       # Temporäre Dateien löschen
-make archive     # Output manuell archivieren
-```
-
-## 📈 Beispiel-Ausgabe
-
-```
-=== Monatsabrechnung Programm ===
-
-Verwende Kontoauszug: input\kontoauszug_mai.csv
-Gefunden: 44 Transaktionen
-Relevante Transaktionen: 30
-
-Abrechnung erstellt: output\monatsabrechnung_20250602_151045.txt
-Excel-Import erstellt: output\abrechnung_import_20250602_151045.csv
-
-Gesamtausgaben: 847.23 €
-Gesamteinnahmen: 150.00 €
-Nettoausgaben: 697.23 €
-Pro Person: 348.62 €
-```
-
-## 🧮 Berechnungslogik
-
-1. **Ausgaben sammeln**: Alle Ausgaben außer blocklist
-2. **Eingänge sammeln**: Nur Eingänge von allowlist
-3. **Nettoausgaben**: Ausgaben - Eingänge
-4. **Pro Person**: Nettoausgaben ÷ 2
-
-**Beispiel:**
-- Ausgaben: 1000€ (Supermarkt, Restaurants, etc.)
-- Eingänge: 200€ (Krankenkassen-Erstattung)
-- Nettoausgaben: 800€
-- **Jeder zahlt: 400€**
-
-## 🗃️ Archivierung
-
-Alte Abrechnungen werden automatisch nach `output/archiv/` verschoben. Der `output/` Ordner enthält immer nur die neueste Abrechnung.
-
-## 🔒 Datenschutz
-
-- Kontoauszüge und Abrechnungen werden nicht versioniert (`.gitignore`)
-- Persönliche Konfigurationsdateien bleiben lokal
-- Nur der Programmcode wird geteilt
 
 ## 🐛 Fehlerbehebung
 
-### "No module named 'config.settings'"
-```bash
-# Stelle sicher dass alle __init__.py Dateien existieren
-make setup
-```
+**"Keine CSV-Dateien gefunden"**
+- Datei in richtigen Ordner legen (`input/` oder `input/expenses/`)
 
-### "Keine CSV-Dateien im input/ Ordner gefunden"
-```bash
-# CSV-Datei in input/ Ordner legen
-# Dateiname ist egal, das neueste wird verwendet
-```
+**"PyYAML nicht installiert"**
+- `pip install pyyaml` oder `make install`
 
-### "PyYAML ist nicht installiert"
-```bash
-pip install pyyaml
-# oder
-make install
-```
+**"Ungültige Person 'x'"**
+- Nur 'a' oder 'b' im `person`-Feld verwenden
+
+**"Validierung fehlgeschlagen"**
+- CSV-Format prüfen: `person,amount,comment`
+- Betrag als Zahl eingeben (12.50 oder 12,50)

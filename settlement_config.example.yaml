@@ -1,0 +1,11 @@
+input_folder: input/expenses
+output_folder: output/settlements
+csv_delimiter: ";"
+input_encoding: "utf-8"
+auto_find_latest: true
+valid_persons:
+  - a
+  - b
+generate_text_report: true
+generate_csv_report: true
+archive_old_files: true
