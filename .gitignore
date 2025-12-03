@@ -1,17 +1,24 @@
 # Sensible Daten - Kontoauszüge und Abrechnungen
-input/
-output/
-config.yaml
-settlement_config.yaml
-!settlement_config.example.yaml
+# Ignore contents of directories, not the directories themselves
+input/bank/*
+input/paper/*
+output/bank/*
+output/paper/*
+config_bank.yaml
+config_paper.yaml
 
-# Settlement expense data (keep directory structure)
-input/expenses/*.csv
-!input/expenses/example.csv
-output/settlements/**/settlement_*.csv
-output/settlements/**/settlement_*.txt
-!input/expenses/.gitkeep
-!output/settlements/.gitkeep
+# Track templates and structure
+!input/bank/.gitkeep
+!input/paper/.gitkeep
+!input/paper/example.csv
+!config_bank.example.yaml
+!config_paper.example.yaml
+
+# Old directory structure (to be cleaned up)
+input/expenses/
+output/settlements/
+output/2025-*/
+output/archiv/
 
 # Persönliche Konfiguration
 config/allowlist.yaml

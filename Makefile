@@ -1,29 +1,35 @@
 # Makefile für Monatsabrechnung
 
-.PHONY: help setup install run clean archive settlement settlement-run settlement-setup settlement-clean
+.PHONY: help setup install clean run venv freeze install-deps config
+.PHONY: bank-setup bank-run bank-clean bank-archive
+.PHONY: paper-setup paper-run paper-clean
 
 # Standard target
 help:
 	@echo "Verfügbare Commands:"
 	@echo ""
-	@echo "Bank Statement Processing:"
-	@echo "  setup     - Projekt komplett einrichten (venv + deps + dirs)"
-	@echo "  install   - Dependencies installieren"
-	@echo "  run       - Monatsabrechnung ausführen"
-	@echo "  clean     - Temporäre Dateien löschen"
-	@echo "  archive   - Output manuell archivieren"
+	@echo "General:"
+	@echo "  setup          - Komplettes Setup (bank + paper)"
+	@echo "  run            - Beide Abrechnungen ausführen (bank + paper)"
+	@echo "  install        - Dependencies installieren"
+	@echo "  clean          - Temporäre Dateien löschen"
 	@echo ""
-	@echo "Personal Expense Settlement:"
-	@echo "  settlement-setup  - Settlement-Verzeichnisse erstellen"
-	@echo "  settlement-run    - Settlement-Abrechnung ausführen"
-	@echo "  settlement-clean  - Settlement-Archiv leeren"
-	@echo "  settlement        - Alias für settlement-run"
+	@echo "Bank Processing:"
+	@echo "  bank-setup     - Bank-Verzeichnisse erstellen"
+	@echo "  bank-run       - Bank-Abrechnung ausführen"
+	@echo "  bank-clean     - Bank-Archiv leeren"
+	@echo "  bank-archive   - Bank-Output archivieren"
+	@echo ""
+	@echo "Paper Processing:"
+	@echo "  paper-setup    - Paper-Verzeichnisse erstellen"
+	@echo "  paper-run      - Paper-Abrechnung ausführen"
+	@echo "  paper-clean    - Paper-Archiv leeren"
 
-# Projekt einrichten
-setup: venv install dirs config settlement-setup
+# Komplettes Setup
+setup: venv install dirs config bank-setup paper-setup
 	@echo "✅ Projekt ist bereit!"
-	@echo "Führe 'make run' aus um die Abrechnung zu starten"
-	@echo "Führe 'make settlement-run' aus um die Settlement-Abrechnung zu starten"
+	@echo "Führe 'make bank-run' aus um die Bank-Abrechnung zu starten"
+	@echo "Führe 'make paper-run' aus um die Paper-Abrechnung zu starten"
 
 # Virtual Environment erstellen
 venv:
@@ -39,14 +45,9 @@ install:
 # Verzeichnisse erstellen
 dirs:
 	@echo "📁 Erstelle Verzeichnisse..."
-	@mkdir -p input
-	@mkdir -p output
-	@mkdir -p output/archiv
-	@mkdir -p config
-	@mkdir -p modules
-	@mkdir -p input/expenses
-	@mkdir -p output/settlements
-	@mkdir -p output/settlements/archiv
+	@mkdir -p config modules
+	@mkdir -p input/bank input/paper
+	@mkdir -p output/bank/archiv output/paper/archiv
 
 # Beispiel-Konfiguration erstellen
 config:
@@ -55,11 +56,6 @@ config:
 	@[ ! -f "config/blocklist.yaml" ] && (echo "# Beispiel blocklist.yaml" > config/blocklist.yaml && echo "expense_recipients:" >> config/blocklist.yaml && echo "  - \"Beispiel Bank\"" >> config/blocklist.yaml) || true
 	@echo "✏️ Passe config/allowlist.yaml und config/blocklist.yaml an!"
 
-# Hauptprogramm ausführen
-run:
-	@echo "🚀 Starte Monatsabrechnung..."
-	python3 main.py
-
 # Temporäre Dateien löschen
 clean:
 	@echo "🧹 Lösche temporäre Dateien..."
@@ -67,13 +63,9 @@ clean:
 	@find . -name "*.pyc" -delete 2>/dev/null || true
 	@echo "✅ Aufräumen abgeschlossen"
 
-# Output manuell archivieren
-archive:
-	@echo "📦 Archiviere Output-Dateien..."
-	@mkdir -p output/archiv
-	@mv output/monatsabrechnung_*.txt output/archiv/ 2>/dev/null || true
-	@mv output/abrechnung_import_*.csv output/archiv/ 2>/dev/null || true
-	@echo "✅ Dateien archiviert"
+# Beide Abrechnungen ausführen
+run: bank-run paper-run
+	@echo "✅ Beide Abrechnungen abgeschlossen!"
 
 # Requirements.txt erstellen
 freeze:
@@ -85,21 +77,41 @@ install-deps:
 	@echo "📥 Installiere aus requirements.txt..."
 	pip install -r requirements.txt
 
-# Settlement-specific targets
-settlement-setup:
-	@echo "📋 Einrichten Settlement-Funktionalität..."
-	@mkdir -p input/expenses
-	@mkdir -p output/settlements
-	@mkdir -p output/settlements/archiv
-	@[ ! -f "settlement_config.yaml" ] && echo "⚠️  settlement_config.yaml fehlt - bitte erstellen!" || echo "✓ settlement_config.yaml gefunden"
-	@echo "✅ Settlement-Verzeichnisse bereit!"
+# Bank targets
+bank-setup:
+	@echo "📋 Bank-Setup..."
+	@mkdir -p input/bank output/bank/archiv config
+	@[ ! -f "config_bank.yaml" ] && echo "⚠️  config_bank.yaml fehlt - bitte erstellen!" || echo "✓ config_bank.yaml gefunden"
+	@echo "✅ Bank-Verzeichnisse bereit!"
 
-settlement-run: settlement
-settlement:
-	@echo "💰 Starte Settlement-Abrechnung..."
-	@python3 settlement.py
+bank-run:
+	@echo "🏦 Starte Bank-Abrechnung..."
+	python3 bank.py
 
-settlement-clean:
-	@echo "🧹 Lösche Settlement-Archiv..."
-	@rm -rf output/settlements/archiv/* 2>/dev/null || true
-	@echo "✅ Settlement-Archiv geleert"
+bank-clean:
+	@echo "🧹 Lösche Bank-Archiv..."
+	@rm -rf output/bank/archiv/* 2>/dev/null || true
+	@echo "✅ Bank-Archiv geleert"
+
+bank-archive:
+	@echo "📦 Archiviere Bank-Dateien..."
+	@mkdir -p output/bank/archiv
+	@find output/bank -maxdepth 2 -name "monatsabrechnung_*.txt" -exec mv {} output/bank/archiv/ \; 2>/dev/null || true
+	@find output/bank -maxdepth 2 -name "monatsabrechnung_*.csv" -exec mv {} output/bank/archiv/ \; 2>/dev/null || true
+	@echo "✅ Dateien archiviert"
+
+# Paper targets
+paper-setup:
+	@echo "📋 Paper-Setup..."
+	@mkdir -p input/paper output/paper/archiv config
+	@[ ! -f "config_paper.yaml" ] && echo "⚠️  config_paper.yaml fehlt - bitte erstellen!" || echo "✓ config_paper.yaml gefunden"
+	@echo "✅ Paper-Verzeichnisse bereit!"
+
+paper-run:
+	@echo "💰 Starte Paper-Abrechnung..."
+	python3 paper.py
+
+paper-clean:
+	@echo "🧹 Lösche Paper-Archiv..."
+	@rm -rf output/paper/archiv/* 2>/dev/null || true
+	@echo "✅ Paper-Archiv geleert"

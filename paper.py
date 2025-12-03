@@ -56,7 +56,7 @@ def main():
     print()
 
     # Load configuration
-    config_file = "settlement_config.yaml"
+    config_file = "config_paper.yaml"
     try:
         config = read_config_file(config_file)
         print(f"✓ Konfiguration geladen: {config_file}")
@@ -64,14 +64,10 @@ def main():
         print(f"✗ {e}")
         return
 
-    # Find input file
+    # Find input file (always use most recent)
     try:
-        if config.get("auto_find_latest", True):
-            input_file = find_latest_expense_file(config["input_folder"])
-            print(f"✓ Verwende neueste Datei: {os.path.basename(input_file)}")
-        else:
-            print("✗ auto_find_latest ist deaktiviert. Kommandozeilenargumente noch nicht implementiert.")
-            return
+        input_file = find_latest_expense_file(config["input_folder"])
+        print(f"✓ Verwende neueste Datei: {os.path.basename(input_file)}")
     except FileNotFoundError as e:
         print(f"✗ {e}")
         return
@@ -86,8 +82,8 @@ def main():
 
     # Read and validate expenses
     try:
-        expenses = reader.read_csv(input_file)
-        print(f"✓ Gefunden: {len(expenses)} Ausgaben")
+        year, month, expenses = reader.read_csv(input_file)
+        print(f"✓ Gefunden: {len(expenses)} Ausgaben für {year}-{month}")
     except ValueError as e:
         print(f"✗ Validierungsfehler:\n{e}")
         return
@@ -108,7 +104,7 @@ def main():
 
     # Generate reports
     try:
-        report_paths = writer.generate_reports(settlement_result, expenses)
+        report_paths = writer.generate_reports(settlement_result, expenses, year, month)
         print(f"✓ Berichte erstellt")
     except Exception as e:
         print(f"✗ Fehler beim Erstellen der Berichte: {e}")

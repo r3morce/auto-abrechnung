@@ -11,26 +11,29 @@ class SettlementReportWriter:
         self.archive_directory = os.path.join(self.output_directory, "archiv")
         self.delimiter = ";"
 
-    def generate_reports(self, settlement_result: dict, expenses: list) -> dict:
+    def generate_reports(self, settlement_result: dict, expenses: list, year: str, month: str) -> dict:
         # Archive old files first
         self._archive_old_files()
 
+        # Use YYYY-MM format for folder
+        foldername = f"{year}-{month}"
+
         # Generate both text and CSV reports
-        text_path = self._generate_text_report(settlement_result, expenses)
-        csv_path = self._generate_csv_report(settlement_result, expenses)
+        text_path = self._generate_text_report(settlement_result, expenses, foldername)
+        csv_path = self._generate_csv_report(settlement_result, expenses, foldername)
 
         return {
             'text': text_path,
             'csv': csv_path
         }
 
-    def _generate_text_report(self, settlement_result: dict, expenses: list) -> str:
+    def _generate_text_report(self, settlement_result: dict, expenses: list, foldername: str) -> str:
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-        filename = f"settlement_{timestamp}.txt"
-        filepath = os.path.join(self.output_directory, filename)
+        filename = f"ausgleich_{timestamp}.txt"
+        filepath = os.path.join(self.output_directory, foldername, filename)
 
         # Ensure output directory exists
-        os.makedirs(self.output_directory, exist_ok=True)
+        os.makedirs(os.path.dirname(filepath), exist_ok=True)
 
         with open(filepath, "w", encoding="utf-8") as file:
             # Header - match bank statement format
@@ -86,13 +89,13 @@ class SettlementReportWriter:
 
         return filepath
 
-    def _generate_csv_report(self, settlement_result: dict, expenses: list) -> str:
+    def _generate_csv_report(self, settlement_result: dict, expenses: list, foldername: str) -> str:
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-        filename = f"settlement_{timestamp}.csv"
-        filepath = os.path.join(self.output_directory, filename)
+        filename = f"ausgleich_{timestamp}.csv"
+        filepath = os.path.join(self.output_directory, foldername, filename)
 
         # Ensure output directory exists
-        os.makedirs(self.output_directory, exist_ok=True)
+        os.makedirs(os.path.dirname(filepath), exist_ok=True)
 
         with open(filepath, "w", newline="", encoding="utf-8") as csvfile:
             writer = csv.writer(csvfile, delimiter=self.delimiter)
@@ -152,7 +155,7 @@ class SettlementReportWriter:
         os.makedirs(self.archive_directory, exist_ok=True)
 
         for filename in os.listdir(self.output_directory):
-            if filename.startswith("settlement_") and (filename.endswith(".csv") or filename.endswith(".txt")):
+            if filename.startswith("ausgleich_") and (filename.endswith(".csv") or filename.endswith(".txt")):
                 old_file = os.path.join(self.output_directory, filename)
                 archive_file = os.path.join(self.archive_directory, filename)
 

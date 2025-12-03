@@ -46,7 +46,7 @@ def find_latest_bank_statement(input_folder: str):
 
 
 def create_directories():
-    directories = ["input", "output", "output/archiv", "modules", "config"]
+    directories = ["input/bank", "output/bank", "output/bank/archiv", "modules", "config"]
     for directory in directories:
         os.makedirs(directory, exist_ok=True)
 
@@ -65,7 +65,7 @@ def main():
 
     create_directories()
 
-    config_file = "config.yaml"
+    config_file = "config_bank.yaml"
     config = read_config_file(config_file)
     print(f"Konfiguration geladen: {config_file}")
 

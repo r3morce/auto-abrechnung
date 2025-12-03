@@ -1,0 +1,3 @@
+input_folder: input/bank
+output_folder: output/bank
+csv_delimiter: ";"

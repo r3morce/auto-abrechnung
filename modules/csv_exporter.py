@@ -15,11 +15,12 @@ class CsvExporter:
     ):
         self._archive_old_files()
 
-        start_date = min(t.date for t in transactions).strftime("%Y-%m-%d")
-        end_date = max(t.date for t in transactions).strftime("%Y-%m-%d")
+        start_date = min(t.date for t in transactions)
+        end_date = max(t.date for t in transactions)
 
-        filename = f"monatsabrechnung_{start_date}_{end_date}.csv"
-        foldername = f"{start_date}_{end_date}"
+        # Use YYYY-MM format for folder
+        foldername = start_date.strftime("%Y-%m")
+        filename = f"monatsabrechnung_{start_date.strftime('%Y-%m-%d')}_{end_date.strftime('%Y-%m-%d')}.csv"
 
         filepath = os.path.join(self.output_directory, foldername, filename)
 
