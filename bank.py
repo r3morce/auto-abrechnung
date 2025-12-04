@@ -1,6 +1,5 @@
 import os
 import sys
-import glob
 
 # Stelle sicher, dass alle Module gefunden werden
 current_dir = os.path.dirname(os.path.abspath(__file__))
@@ -17,80 +16,60 @@ except ImportError:
 
 try:
     from modules.csv_reader import BankStatementReader
-    from modules.transaction_filter import TransactionFilter
-    from modules.settlement_calculator import SettlementCalculator
-    from modules.report_generator import ReportGenerator
+    from modules.filters import filter_transactions
+    from modules.settlement import calculate_bank_settlement
+    from modules.report_writer import BankReportWriter
     from modules.csv_exporter import CsvExporter
+    from modules.utils import find_latest_file, read_config, create_directories
     from config.settings import Settings
 except ImportError as e:
     print(f"Import-Fehler: {e}")
     print("Stelle sicher, dass alle Dateien im richtigen Verzeichnis sind:")
     print("- modules/csv_reader.py")
-    print("- modules/transaction_filter.py")
-    print("- modules/settlement_calculator.py")
-    print("- modules/report_generator.py")
+    print("- modules/filters.py")
+    print("- modules/settlement.py")
+    print("- modules/report_writer.py")
     print("- modules/csv_exporter.py")
+    print("- modules/utils.py")
     print("- config/settings.py")
     print("- config/allowlist.yaml")
     print("- config/blocklist.yaml")
     sys.exit(1)
 
 
-def find_latest_bank_statement(input_folder: str):
-    csv_files = glob.glob(f"{input_folder}/*.csv")
-    if not csv_files:
-        raise FileNotFoundError(f"Keine CSV-Dateien im Ordner {input_folder} gefunden")
-
-    latest_file = max(csv_files, key=os.path.getctime)
-    return latest_file
-
-
-def create_directories():
-    directories = ["input/bank", "output/bank", "output/bank/archiv", "modules", "config"]
-    for directory in directories:
-        os.makedirs(directory, exist_ok=True)
-
-
-def read_config_file(file_path):
-    # contains: input_folder, output_folder
-    if not os.path.exists(file_path):
-        raise FileNotFoundError(f"Konfigurationsdatei {file_path} nicht gefunden")
-    with open(file_path, "r", encoding="utf-8") as file:
-        config = yaml.safe_load(file)
-    return config
-
-
 def main():
     print("=== Monatsabrechnung Programm ===\n")
 
-    create_directories()
+    create_directories("input/bank", "output/bank", "output/bank/archiv", "modules", "config")
 
     config_file = "config_bank.yaml"
-    config = read_config_file(config_file)
+    config = read_config(config_file)
     print(f"Konfiguration geladen: {config_file}")
 
     try:
-        latest_statement_file = find_latest_bank_statement(config["input_folder"])
+        latest_statement_file = find_latest_file(config["input_folder"])
         if not latest_statement_file:
             raise FileNotFoundError("Keine gültige Kontoauszug-Datei gefunden")
         print(f"Verwende Kontoauszug: {latest_statement_file}")
 
         settings = Settings()
         reader = BankStatementReader(delimiter=config.get("csv_delimiter"))
-        transaction_filter = TransactionFilter(settings)
-        calculator = SettlementCalculator()
-        report_generator = ReportGenerator(config["output_folder"])
+        report_writer = BankReportWriter(config["output_folder"])
         csv_exporter = CsvExporter(config["output_folder"])
 
         raw_transactions = reader.read_csv(latest_statement_file)
         print(f"Gefunden: {len(raw_transactions)} Transaktionen")
 
-        filtered_transactions = transaction_filter.filter_transactions(raw_transactions)
+        filtered_transactions = filter_transactions(
+            raw_transactions,
+            settings.income_allow_list,
+            settings.expense_block_list
+        )
         print(f"Relevante Transaktionen: {len(filtered_transactions)}")
 
-        settlement_result = calculator.calculate_settlement(filtered_transactions)
+        settlement_result = calculate_bank_settlement(filtered_transactions)
 
-        output_file = report_generator.generate_report(settlement_result, filtered_transactions)
+        output_file = report_writer.generate_report(settlement_result, filtered_transactions)
         csv_file = csv_exporter.export_for_excel(settlement_result, filtered_transactions)
 
         print(f"\nAbrechnung erstellt: {output_file}")

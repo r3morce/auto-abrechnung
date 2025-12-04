@@ -1,6 +1,5 @@
 import os
 import sys
-import glob
 
 # Add module paths
 current_dir = os.path.dirname(os.path.abspath(__file__))
@@ -15,38 +14,17 @@ except ImportError:
 
 try:
     from modules.expense_reader import ExpenseReader
-    from modules.person_settlement_calculator import PersonSettlementCalculator
-    from modules.settlement_report_writer import SettlementReportWriter
+    from modules.settlement import calculate_person_settlement
+    from modules.report_writer import PersonReportWriter
+    from modules.utils import find_latest_file, read_config
 except ImportError as e:
     print(f"Import-Fehler: {e}")
     print("Stelle sicher, dass alle Dateien im richtigen Verzeichnis sind:")
     print("- modules/expense_reader.py")
-    print("- modules/person_settlement_calculator.py")
-    print("- modules/settlement_report_writer.py")
+    print("- modules/settlement.py")
+    print("- modules/report_writer.py")
+    print("- modules/utils.py")
     sys.exit(1)
-
-
-def find_latest_expense_file(input_folder: str):
-    csv_files = glob.glob(f"{input_folder}/*.csv")
-    if not csv_files:
-        raise FileNotFoundError(
-            f"Keine CSV-Dateien im Ordner {input_folder} gefunden.\n"
-            f"Bitte lege eine CSV-Datei mit dem Format 'person,amount,comment' dort ab."
-        )
-
-    latest_file = max(csv_files, key=os.path.getctime)
-    return latest_file
-
-
-def read_config_file(file_path):
-    if not os.path.exists(file_path):
-        raise FileNotFoundError(
-            f"Konfigurationsdatei {file_path} nicht gefunden.\n"
-            f"Erstelle die Datei mit den erforderlichen Einstellungen."
-        )
-    with open(file_path, "r", encoding="utf-8") as file:
-        config = yaml.safe_load(file)
-    return config
 
 
 def main():
@@ -58,7 +36,7 @@ def main():
     # Load configuration
     config_file = "config_paper.yaml"
     try:
-        config = read_config_file(config_file)
+        config = read_config(config_file)
         print(f"✓ Konfiguration geladen: {config_file}")
     except FileNotFoundError as e:
         print(f"✗ {e}")
@@ -66,7 +44,7 @@ def main():
 
     # Find input file (always use most recent)
     try:
-        input_file = find_latest_expense_file(config["input_folder"])
+        input_file = find_latest_file(config["input_folder"])
         print(f"✓ Verwende neueste Datei: {os.path.basename(input_file)}")
     except FileNotFoundError as e:
         print(f"✗ {e}")
@@ -77,8 +55,7 @@ def main():
         valid_persons=config.get("valid_persons", ["a", "b"]),
         delimiter=config.get("csv_delimiter", ",")
     )
-    calculator = PersonSettlementCalculator()
-    writer = SettlementReportWriter(config["output_folder"])
+    writer = PersonReportWriter(config["output_folder"])
 
     # Read and validate expenses
     try:
@@ -93,7 +70,7 @@ def main():
 
     # Calculate settlement
     try:
-        settlement_result = calculator.calculate_settlement(expenses)
+        settlement_result = calculate_person_settlement(expenses)
         print(f"✓ Abrechnung berechnet")
     except ValueError as e:
         print(f"✗ Berechnungsfehler: {e}")
