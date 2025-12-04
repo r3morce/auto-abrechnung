@@ -9,7 +9,15 @@ Automatische Aufteilung von Monatskosten zwischen zwei Personen.
 ## ⚡ Schnellstart
 
 ```bash
-make setup              # Projekt einrichten (bank + paper)
+# 1. Setup
+make setup              # Projekt einrichten (Verzeichnisse + Dependencies)
+
+# 2. Konfiguration erstellen
+cp config_bank.example.yaml config_bank.yaml
+cp config_paper.example.yaml config_paper.yaml
+# Passe die Configs an (siehe Konfiguration unten)
+
+# 3. Ausführen
 make run                # Beide Abrechnungen ausführen
 # oder einzeln:
 make bank-run           # Bank-Abrechnung
@@ -19,7 +27,7 @@ make paper-run          # Personal-Abrechnung
 ## 📋 Voraussetzungen
 
 - Python 3.7+
-- PyYAML (`pip install pyyaml`)
+- PyYAML (`pip install pyyaml` oder `make install`)
 
 ## 🔧 Verfügbare Commands
 
@@ -49,13 +57,13 @@ make paper-clean      # Archiv leeren
 
 ## 🏦 Bank Statement Processing
 
-### Setup
-1. Projekt einrichten: `make setup`
-2. Konfigurationsdateien anpassen:
+### Setup & Konfiguration
+
+1. **Projekt einrichten:** `make bank-setup`
+2. **Config erstellen:** `cp config_bank.example.yaml config_bank.yaml`
+3. **Allowlist/Blocklist anpassen:**
    - `config/allowlist.yaml` - Erlaubte Eingänge
    - `config/blocklist.yaml` - Ignorierte Ausgaben
-
-### Konfiguration
 
 **`config/allowlist.yaml`** - Welche Eingänge werden berücksichtigt:
 ```yaml
@@ -69,14 +77,20 @@ income_senders:
 expense_recipients:
   - "Hausverwaltung"
   - "Stadtwerke"
-  - "Sparkasse"
+```
+
+**`config_bank.yaml`:**
+```yaml
+input_folder: input/bank              # Eingabe-Ordner
+output_folder: output/bank            # Ausgabe-Ordner
+csv_delimiter: ";"                    # CSV-Trennzeichen
 ```
 
 ### Verwendung
 1. CSV-Kontoauszug von Bank herunterladen
 2. In `input/bank/` Ordner legen
 3. `make bank-run` ausführen
-4. Ergebnisse in `output/bank/` prüfen
+4. Ergebnisse in `output/bank/YYYY-MM/` prüfen
 
 ### CSV-Format (DKB Bank)
 Benötigte Spalten: `Buchungsdatum`, `Zahlungspflichtige*r`, `Zahlungsempfänger*in`, `Betrag (€)`, `Verwendungszweck`, `Umsatztyp`
@@ -85,15 +99,15 @@ Benötigte Spalten: `Buchungsdatum`, `Zahlungspflichtige*r`, `Zahlungsempfänger
 
 ## 💵 Personal Expense Settlement
 
-### Setup
-1. Projekt einrichten: `make setup`
-2. Verzeichnisse erstellen: `make settlement-setup`
-3. Config erstellen: `cp config_paper.example.yaml config_paper.yaml`
-4. Config anpassen (Pfade, falls nötig)
+### Setup & Konfiguration
+
+1. **Projekt einrichten:** `make paper-setup`
+2. **Config erstellen:** `cp config_paper.example.yaml config_paper.yaml`
+3. **Config anpassen:** Pfade und Personen-Kennungen (siehe unten)
 
 ### CSV-Format (Personal Expenses)
 
-Siehe `input/expenses/example.csv` als Vorlage. Erstelle CSV-Datei in `input/expenses/`:
+Siehe `input/paper/example.csv` als Vorlage. Erstelle CSV-Datei in `input/paper/`:
 
 ```csv
 25
@@ -115,16 +129,14 @@ a;30,00;Tankstelle
 - `amount` - Betrag (Dezimalformat gemäß `csv_delimiter` in config)
 - `comment` - Optional
 
-**Hinweis:** Trennzeichen muss mit `csv_delimiter` in `config_paper.yaml` übereinstimmen
-
-### Konfiguration
-
-Kopiere `config_paper.example.yaml` zu `config_paper.yaml` und passe an:
+**Hinweis:**
+- Das Script verwendet automatisch die neueste CSV-Datei im Eingabe-Ordner
+- Trennzeichen muss mit `csv_delimiter` in `config_paper.yaml` übereinstimmen
 
 **`config_paper.yaml`:**
 ```yaml
 input_folder: input/paper             # Eingabe-Ordner
-output_folder: output/paper           # Ausgabe-Ordner
+output_folder: output/paper           # Ausgabe-Ordner (oder alternativer Pfad)
 csv_delimiter: ";"                    # CSV-Trennzeichen (Semikolon oder Komma)
 input_encoding: "utf-8"               # Zeichenkodierung
 valid_persons:
@@ -136,12 +148,10 @@ generate_csv_report: true             # CSV-Report generieren
 archive_old_files: true               # Alte Dateien archivieren
 ```
 
-**Hinweis:** Das Script verwendet automatisch die neueste CSV-Datei im Eingabe-Ordner.
-
 ### Verwendung
 1. CSV-Datei in `input/paper/` erstellen
-2. `make paper-run` ausführen
-3. Ergebnisse in `output/paper/` prüfen
+2. `make paper-run` ausführen (verwendet automatisch die neueste Datei)
+3. Ergebnisse in `output/paper/YYYY-MM/` prüfen
 
 ### Beispiel-Ausgabe
 ```
@@ -181,10 +191,14 @@ auto-abrechnung/
 **"PyYAML nicht installiert"**
 - `pip install pyyaml` oder `make install`
 
-**"Ungültige Person 'x'"**
-- Nur erlaubte Personen im `person`-Feld verwenden (Standard: 'a', 'b', 'm')
+**"Import-Fehler"**
+- Stelle sicher, dass alle Module vorhanden sind
+- Führe `make setup` aus, um Verzeichnisstruktur zu erstellen
+
+**"Ungültige Person 'x'"** (nur paper)
+- Nur erlaubte Personen verwenden (Standard: 'a', 'b', 'm')
 - Prüfe `valid_persons` in `config_paper.yaml`
 
-**"Validierung fehlgeschlagen"**
-- CSV-Format prüfen: `person,amount,comment`
-- Betrag als Zahl eingeben (12.50 oder 12,50)
+**"Konfigurationsdatei nicht gefunden"**
+- Erstelle Config: `cp config_bank.example.yaml config_bank.yaml`
+- Oder: `cp config_paper.example.yaml config_paper.yaml`
