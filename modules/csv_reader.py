@@ -81,7 +81,15 @@ class BankStatementReader:
         return True
 
     def _create_transaction_from_row(self, row):
-        amount_str = row[self.amount_column].replace(",", ".")
+        amount_str = row[self.amount_column].strip()
+        # Remove Euro symbol and whitespace
+        amount_str = amount_str.replace("€", "").replace(" ", "")
+        # Remove thousand separators (periods in German format)
+        # In German format: 1.468,84 means 1468.84
+        # We need to remove the periods (thousand separators) first
+        # Then replace comma (decimal separator) with period
+        amount_str = amount_str.replace(".", "")
+        amount_str = amount_str.replace(",", ".")
         amount = Decimal(amount_str)
 
         date_str = row[self.date_column]
