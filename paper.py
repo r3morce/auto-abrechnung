@@ -1,129 +1,86 @@
+"""CLI entry point for personal-expense settlement.
+
+Thin wrapper around `modules.paper_runner`.
+"""
+
 import os
 import sys
+from pathlib import Path
 
-# Add module paths
 current_dir = os.path.dirname(os.path.abspath(__file__))
-sys.path.insert(0, os.path.join(current_dir, "modules"))
+sys.path.insert(0, current_dir)
 
 try:
-    import yaml
+    import yaml  # noqa: F401
 except ImportError:
     print("Fehler: PyYAML ist nicht installiert.")
     print("Installiere es mit: pip install pyyaml")
     sys.exit(1)
 
-try:
-    from modules.expense_reader import ExpenseReader
-    from modules.settlement import calculate_person_settlement
-    from modules.report_writer import PersonReportWriter
-    from modules.utils import find_latest_file, read_config
-except ImportError as e:
-    print(f"Import-Fehler: {e}")
-    print("Stelle sicher, dass alle Dateien im richtigen Verzeichnis sind:")
-    print("- modules/expense_reader.py")
-    print("- modules/settlement.py")
-    print("- modules/report_writer.py")
-    print("- modules/utils.py")
-    sys.exit(1)
+from modules.environment import ItemStatus
+from modules.paper_runner import preview_paper, run_paper_settlement
 
 
-def main():
+def main() -> int:
     print("=" * 60)
     print("PERSONAL EXPENSE SETTLEMENT")
     print("=" * 60)
     print()
 
-    # Load configuration
-    config_file = "config_paper.yaml"
-    try:
-        config = read_config(config_file)
-        print(f"✓ Konfiguration geladen: {config_file}")
-    except FileNotFoundError as e:
-        print(f"✗ {e}")
-        return
+    project_root = Path(current_dir)
 
-    # Find input file (always use most recent)
-    try:
-        input_file = find_latest_file(config["input_folder"])
-        print(f"✓ Verwende neueste Datei: {os.path.basename(input_file)}")
-    except FileNotFoundError as e:
-        print(f"✗ {e}")
-        return
+    preview = preview_paper(project_root)
+    if preview.status is ItemStatus.ERROR:
+        print(f"\u2717 {preview.reason}")
+        return 1
+    print(f"\u2713 Konfiguration geladen: config_paper.yaml")
 
-    # Initialize components
-    reader = ExpenseReader(
-        valid_persons=config.get("valid_persons", ["a", "b"]),
-        delimiter=config.get("csv_delimiter", ",")
-    )
-    writer = PersonReportWriter(config["output_folder"])
+    if preview.input_file is None:
+        print(f"\u2717 {preview.reason or 'Keine Eingabedatei'}")
+        return 1
+    print(f"\u2713 Verwende neueste Datei: {preview.input_file.name}")
 
-    # Read and validate expenses
-    try:
-        year, month, expenses = reader.read_csv(input_file)
-        print(f"✓ Gefunden: {len(expenses)} Ausgaben für {year}-{month}")
-    except ValueError as e:
-        print(f"✗ Validierungsfehler:\n{e}")
-        return
-    except Exception as e:
-        print(f"✗ Fehler beim Lesen der CSV-Datei: {e}")
-        return
+    result = run_paper_settlement(project_root)
+    if result.status is ItemStatus.ERROR:
+        print(f"\u2717 Fehler: {result.reason}")
+        return 1
+    print(f"\u2713 Abrechnung berechnet")
+    print(f"\u2713 Berichte erstellt")
 
-    # Calculate settlement
-    try:
-        settlement_result = calculate_person_settlement(expenses)
-        print(f"✓ Abrechnung berechnet")
-    except ValueError as e:
-        print(f"✗ Berechnungsfehler: {e}")
-        return
-    except Exception as e:
-        print(f"✗ Fehler bei der Berechnung: {e}")
-        return
-
-    # Generate reports
-    try:
-        report_paths = writer.generate_reports(settlement_result, expenses, year, month)
-        print(f"✓ Berichte erstellt")
-    except Exception as e:
-        print(f"✗ Fehler beim Erstellen der Berichte: {e}")
-        return
-
-    # Display results
     print()
     print("=" * 60)
     print("ERGEBNIS")
     print("=" * 60)
     print()
-    print(f"Person A:        {settlement_result['person_a_total']:>10.2f} €")
-    print(f"Person M:        {settlement_result['person_m_total']:>10.2f} €")
+    print(f"Person A:        {result.person_a_total:>10.2f} \u20ac")
+    print(f"Person M:        {result.person_m_total:>10.2f} \u20ac")
     print("-" * 60)
-    print(f"Gesamt:          {settlement_result['grand_total']:>10.2f} €")
-    print(f"Pro Person:      {settlement_result['amount_per_person']:>10.2f} €")
+    print(f"Gesamt:          {result.grand_total:>10.2f} \u20ac")
+    print(f"Pro Person:      {result.amount_per_person:>10.2f} \u20ac")
     print()
 
-    reimbursement = settlement_result['reimbursement']
-    if reimbursement['amount'] > 0 and reimbursement['payer']:
+    if result.reimbursement_amount > 0 and result.payer:
         print("AUSGLEICHSZAHLUNG:")
-        print(f"  {reimbursement['payer'].upper()} zahlt an {reimbursement['recipient'].upper()}: {reimbursement['amount']:.2f} €")
+        print(
+            f"  {result.payer.upper()} zahlt an {result.recipient.upper()}: "
+            f"{result.reimbursement_amount:.2f} \u20ac"
+        )
     else:
-        print("✓ Keine Ausgleichszahlung nötig - beide haben gleich viel ausgegeben!")
+        print("\u2713 Keine Ausgleichszahlung n\u00f6tig - beide haben gleich viel ausgegeben!")
 
     print()
     print("=" * 60)
     print("AUSGABEDATEIEN")
     print("=" * 60)
-    print(f"Text:  {report_paths.get('text')}")
-    print(f"CSV:   {report_paths.get('csv')}")
+    print(f"Text:  {result.text_report_path}")
+    print(f"CSV:   {result.csv_report_path}")
     print()
+    return 0
 
 
 if __name__ == "__main__":
     try:
-        main()
+        sys.exit(main())
     except KeyboardInterrupt:
         print("\n\nAbgebrochen durch Benutzer.")
         sys.exit(0)
-    except Exception as error:
-        print(f"\n✗ Unerwarteter Fehler: {error}")
-        import traceback
-        traceback.print_exc()
-        sys.exit(1)
