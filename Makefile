@@ -1,6 +1,6 @@
 # Makefile für Monatsabrechnung
 
-.PHONY: help setup install clean run venv freeze install-deps config
+.PHONY: help setup install clean run venv freeze install-deps config test tui
 .PHONY: bank-setup bank-run bank-clean bank-archive
 .PHONY: paper-setup paper-run paper-clean
 
@@ -62,6 +62,19 @@ clean:
 	@find . -type d -name "__pycache__" -exec rm -rf {} + 2>/dev/null || true
 	@find . -name "*.pyc" -delete 2>/dev/null || true
 	@echo "✅ Aufräumen abgeschlossen"
+
+# Python aus dem venv bevorzugen, sonst system python3
+PY := $(shell [ -x venv/bin/python ] && echo venv/bin/python || echo python3)
+
+# TUI starten
+tui:
+	@echo "🖼️  Starte TUI..."
+	$(PY) -m tui
+
+# Tests ausführen
+test:
+	@echo "🧪 Starte pytest..."
+	$(PY) -m pytest tests/ -v
 
 # Beide Abrechnungen ausführen
 run: bank-run paper-run
