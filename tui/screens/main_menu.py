@@ -19,6 +19,7 @@ from textual.widgets import Footer, Header, Label, ListItem, ListView
 
 from modules.environment import run_initial_setup, run_sanity_check
 from tui.screens.config_overview import ConfigOverviewScreen
+from tui.screens.paper_entry import PaperEntryScreen
 from tui.screens.result import ResultScreen
 from tui.screens.wizard.mode_select import ModeSelectScreen
 
@@ -60,8 +61,13 @@ def _build_new_abrechnung() -> Screen:
     return ModeSelectScreen(project_root=PROJECT_ROOT)
 
 
+def _build_paper_entry() -> Screen:
+    return PaperEntryScreen(project_root=PROJECT_ROOT)
+
+
 MENU_ACTIONS: List[MenuAction] = [
     MenuAction("new_abrechnung", "Neue Abrechnung", _build_new_abrechnung),
+    MenuAction("paper_entry", "Paper Erfassung", _build_paper_entry),
     MenuAction("initial_setup", "Initial Setup", _build_initial_setup),
     MenuAction("sanity_check", "Sanity Check", _build_sanity_check),
     MenuAction("configuration", "Configuration", _build_configuration),
