@@ -1,11 +1,25 @@
 # Status
 
-_Last updated: 2026-04-27 (end of session)_
+_Last updated: 2026-04-28_
 
 ## Resume here next session
 
-**State:** Phases 1–3 complete. TUI is functional. 17/17 tests green.
-Nothing is committed yet — all work is in the working tree.
+**State:** Phases 1–3 complete and committed. TUI is functional.
+17/17 tests green. Working tree clean.
+
+Last 10 commits (oldest first):
+```
+7f8afaf docs(specs): add requirements, features, phases, workflow, status
+fb8e362 feat(environment): add headless setup and sanity-check api
+7dcbe28 test(environment): add pytest suite for setup and sanity check
+0acb81f chore(deps): add textual
+fefde4c feat(tui): add textual app shell and placeholder screen
+647002b feat(tui): add main menu wired to environment api
+3fd4e71 feat(tui): add result screen with worker-driven report rendering
+c43f0b5 test(tui): add headless smoke and end-to-end tests
+9f13d9a build(make): add test and tui targets with venv-aware python
+5a80af3 docs(agents): document specs, environment api, tests, and tui layers
+```
 
 **First steps next session (in order):**
 1. Read this file, then `specs/workflow.md`.
@@ -18,28 +32,6 @@ Nothing is committed yet — all work is in the working tree.
    See "Pending commits" section below.
 4. Decide next phase with the user (options listed under "Possible next
    phases").
-
-## Pending commits (not yet made)
-Suggested order and messages:
-
-| # | Files | Commit |
-|---|-------|--------|
-| 1 | `specs/` (initial structure) | `docs(specs): add requirements, features, phases, workflow, status` |
-| 2 | `modules/environment.py` (dataclasses + setup + sanity) | `feat(environment): add headless setup and sanity-check api` |
-| 3 | `tests/test_initial_setup.py`, `tests/test_sanity_check.py`, `tests/conftest.py`, `tests/__init__.py` | `test(environment): add pytest suite for setup and sanity check` |
-| 4 | `Makefile` (test target only) | `build(make): add test target` |
-| 5 | `AGENTS.md` (environment + tests sections) | `docs(agents): document environment api and tests layout` |
-| 6 | `requirements.txt` | `chore(deps): add textual` |
-| 7 | `tui/` (app, main_menu, placeholder) | `feat(tui): add textual skeleton with main menu` |
-| 8 | `tests/test_tui_smoke.py` | `test(tui): add headless smoke tests for main menu` |
-| 9 | `Makefile` (tui target + PY shim) | `build(make): add tui target with venv-aware python` |
-| 10 | `tui/screens/result.py` | `feat(tui): add result screen with worker-driven report rendering` |
-| 11 | `tui/screens/main_menu.py` (wire-up edit) | `feat(tui): wire main menu to environment api` |
-| 12 | `tests/test_tui_wireup.py` | `test(tui): add end-to-end tests for setup and sanity check` |
-| 13 | `AGENTS.md` (tui sections), final `specs/status.md` | `docs(agents): document tui package and result screen` |
-
-Alternative: collapse into 3 macro commits (one per phase). User preference
-so far is **separate commits**.
 
 ## Environment notes
 - Old `venv/` was built with Python 3.13 (no longer installed) and was
