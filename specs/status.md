@@ -7,7 +7,7 @@ _Last updated: 2026-04-28_
 **State:** Phases 1–3 complete and committed. TUI is functional.
 17/17 tests green. Working tree clean.
 
-Last 10 commits (oldest first):
+Phase 4 commits and the original 10 from phases 1–3 (oldest first):
 ```
 7f8afaf docs(specs): add requirements, features, phases, workflow, status
 fb8e362 feat(environment): add headless setup and sanity-check api
@@ -52,14 +52,18 @@ feature files under `specs/features/`, set the active phase here, then
 start implementation per `workflow.md`.
 
 ## Active phase
-_None — all planned phases complete._
+_None — Phase 4 complete._
+
+## Tasks — Phase 4
+_All tasks done; see Done section below._
 
 ## Phase overview
-| Phase | Title              | Status |
-|-------|--------------------|--------|
-| 1     | Core API (headless)| done   |
-| 2     | TUI skeleton       | done   |
-| 3     | Wire TUI to API    | done   |
+| Phase | Title                       | Status |
+|-------|-----------------------------|--------|
+| 1     | Core API (headless)         | done   |
+| 2     | TUI skeleton                | done   |
+| 3     | Wire TUI to API             | done   |
+| 4     | Config overview (read-only) | done   |
 
 ## Tasks — Phase 3
 _All tasks done; see Done section below._
@@ -86,6 +90,24 @@ _All tasks done; see Done section below._
   pytest once venv is rebuilt.
 - T1.5 — `AGENTS.md` updated: documents `modules/environment.py` API and the
   new `tests/` layout + `make test`.
+
+## Phase 4 — Done
+- T4.1 — `modules/config_overview.py` with `load_config_overview`,
+  `ConfigOverview`, `ConfigSection`, `ConfigEntry`. Reuses `ItemStatus` /
+  `OverallStatus` from `environment.py`. Lists rendered comma-separated,
+  empty values as `(leer)`, booleans as `ja`/`nein`.
+- T4.2 — 4 unit tests in `tests/test_config_overview.py` covering all
+  scenarios from feature 04.
+- T4.3 — `ConfigOverviewScreen` (`tui/screens/config_overview.py`) renders
+  every section with a header row + key/value rows in a `DataTable`,
+  runs in a worker thread.
+- T4.4 — "Configuration" added as third entry in `MENU_ACTIONS`.
+- T4.5 — e2e TUI test in `tests/test_tui_config_overview.py`.
+- T4.6 — `AGENTS.md` updated with new module and screen.
+
+Definition of Done met:
+- All scenarios in feature 04 pass automated tests.
+- `make test` green (22/22).
 
 ## Phase 3 — Done
 - T3.1 — `ResultScreen` (in `tui/screens/result.py`) renders `SetupReport` /
@@ -156,6 +178,13 @@ Definition of Done met:
 - 2026-04-27 — `MainMenuScreen` resolves the project root via `Path.cwd()`
   at import time (TUI is launched from project root). Tests override
   `tui.screens.main_menu.PROJECT_ROOT` to point at `tmp_path`.
+- 2026-04-28 — Phase 4: read-only config overview as a third menu entry.
+  Render lists comma-separated, booleans as `ja`/`nein`, empties as
+  `(leer)`. Missing files are WARNING (not ERROR) so the screen still
+  renders the other sections.
+- 2026-04-28 — `Screen._render` is reserved by Textual; custom render
+  methods on screens must use a different name (e.g. `_render_overview`,
+  `_render_report`).
 
 ## Open Questions
 _(none)_

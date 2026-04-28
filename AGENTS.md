@@ -26,12 +26,18 @@ Two independent modes:
   - `screens/result.py` — generic `ResultScreen` rendering `SetupReport` /
     `SanityReport` via `DataTable`; runs the factory in a Textual worker
     thread so the UI stays responsive
+  - `screens/config_overview.py` — read-only `ConfigOverviewScreen`
+    listing all known config files and their parsed values
   - `screens/placeholder.py` — fallback screen for not-yet-wired actions
 - `modules/` — Core business logic
   - `environment.py` — Headless API for initial setup and sanity check
     (`run_initial_setup`, `run_sanity_check`, `CheckItem`, `SetupReport`,
     `SanityReport`, `ItemStatus`, `OverallStatus`). TUI-agnostic, no I/O
     side effects beyond filesystem operations.
+  - `config_overview.py` — Headless API for the read-only config overview
+    (`load_config_overview`, `ConfigOverview`, `ConfigSection`,
+    `ConfigEntry`). Reuses `ItemStatus` / `OverallStatus` from
+    `environment.py`.
   - `csv_reader.py` — Reads/parses bank CSV files
   - `expense_reader.py` — Reads personal-expense CSVs (year/month header + rows)
   - `filters.py` — Allowlist/blocklist filtering
@@ -103,7 +109,8 @@ b;120,00;Elektronik
 ## Testing
 
 - `pytest` suite under `tests/`; run with `make test` or `python3 -m pytest tests/`.
-- Current coverage: `modules/environment.py` (initial setup + sanity check).
+- Current coverage: `modules/environment.py` (initial setup + sanity check),
+  `modules/config_overview.py`, and the TUI screens (smoke + e2e).
 - Each test file mirrors a `.feature` under `specs/features/` 1:1.
 - Add tests alongside new logic in `modules/`; keep them TUI-free.
 
