@@ -52,7 +52,10 @@ feature files under `specs/features/`, set the active phase here, then
 start implementation per `workflow.md`.
 
 ## Active phase
-_None — Phase 5 complete._
+_None — Phase 6 complete._
+
+## Tasks — Phase 6
+_All tasks done; see Done section below._
 
 ## Tasks — Phase 5
 _All tasks done; see Done section below._
@@ -68,6 +71,7 @@ _All tasks done; see Done section below._
 | 3     | Wire TUI to API             | done   |
 | 4     | Config overview (read-only) | done        |
 | 5     | New-settlement wizard       | done        |
+| 6     | Manual paper-expense entry  | done        |
 
 ## Tasks — Phase 3
 _All tasks done; see Done section below._
@@ -94,6 +98,28 @@ _All tasks done; see Done section below._
   pytest once venv is rebuilt.
 - T1.5 — `AGENTS.md` updated: documents `modules/environment.py` API and the
   new `tests/` layout + `make test`.
+
+## Phase 6 — Done
+- T6.1 — `modules/paper_entry.py` with `PaperRow`, `LoadResult`,
+  `SaveResult`, `csv_path_for`, `load_paper_csv`, `save_paper_csv`,
+  `parse_amount`, `validate_row`. CSV layout matches `paper.py`.
+- T6.2 — 21 unit tests in `tests/test_paper_entry.py` covering amount
+  parsing, row validation, load (missing/existing/with errors), save
+  (new/overwrite-with-backup/empty/invalid month) and a round-trip
+  compatibility test with `run_paper_settlement`.
+- T6.3 — `PaperEntryScreen` (`tui/screens/paper_entry.py`) with year/month
+  inputs (default = today), add-row form with inline validation, rows
+  table with delete-on-cursor, status line, three buttons.
+- T6.4 — "Paper Erfassung" added as **second** menu entry; existing
+  TUI tests adjusted (action_index +1 again).
+- T6.5 — 3 e2e TUI tests in `tests/test_tui_paper_entry.py`:
+  load existing + add row, save with backup, invalid person error.
+- T6.6 — `AGENTS.md` updated.
+
+Definition of Done met:
+- All scenarios in feature 06 covered (55/55 green).
+- File format compatible with `paper.py` (verified by
+  `test_save_then_paper_run_compatible`).
 
 ## Phase 5 — Done
 - T5.1/T5.2 — `modules/bank_runner.py` and `modules/paper_runner.py` with
@@ -223,6 +249,13 @@ Definition of Done met:
 - 2026-04-28 — "Ordner oeffnen" uses `xdg-open` via
   `subprocess.Popen(start_new_session=True)` so the launched file
   manager doesn't inherit the TUI's terminal.
+- 2026-04-28 — Phase 6: manual paper entry stores CSVs identical to the
+  legacy format so `paper.py` keeps working. Save creates `<file>.bak`
+  next to the original on overwrite.
+- 2026-04-28 — Year is shown as 4-digit in the UI but stored 2-digit in
+  the file (matches `expense_reader` expectations).
+- 2026-04-28 — `Label.renderable` is not a public attribute in current
+  Textual; tests should use `str(label.render())` to read text content.
 
 ## Open Questions
 _(none)_

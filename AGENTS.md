@@ -32,6 +32,10 @@ Two independent modes:
   - `screens/wizard/preview.py` — step 2: config + input + CSV preview
   - `screens/wizard/result.py` — step 3: run + results +
     "Ordner oeffnen" via `xdg-open`
+  - `screens/paper_entry.py` — form-based editor for
+    `input/paper/YY-MM.csv` (auto-loads existing month, validates rows,
+    "Speichern" with backup, "Speichern & Abrechnen" pushes the wizard
+    result screen)
   - `screens/placeholder.py` — fallback screen for not-yet-wired actions
 - `modules/` — Core business logic
   - `environment.py` — Headless API for initial setup and sanity check
@@ -47,6 +51,10 @@ Two independent modes:
   - `paper_runner.py` — Headless API wrapping the paper pipeline:
     `preview_paper`, `run_paper_settlement`, `PaperPreview`,
     `PaperRunResult`.
+  - `paper_entry.py` — Headless API for manual paper-expense entry:
+    `csv_path_for`, `load_paper_csv`, `save_paper_csv`, `validate_row`,
+    `parse_amount`, `PaperRow`, `LoadResult`, `SaveResult`. Saves files
+    in the same format as `paper.py` and creates `<file>.bak` on overwrite.
   - `csv_reader.py` — Reads/parses bank CSV files
   - `expense_reader.py` — Reads personal-expense CSVs (year/month header + rows)
   - `filters.py` — Allowlist/blocklist filtering
