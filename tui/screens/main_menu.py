@@ -18,6 +18,7 @@ from textual.screen import Screen
 from textual.widgets import Footer, Header, Label, ListItem, ListView
 
 from modules.environment import run_initial_setup, run_sanity_check
+from tui.screens.config_overview import ConfigOverviewScreen
 from tui.screens.result import ResultScreen
 
 # Project root used for all environment actions. The TUI is launched from the
@@ -50,9 +51,14 @@ def _build_sanity_check() -> Screen:
     )
 
 
+def _build_configuration() -> Screen:
+    return ConfigOverviewScreen(project_root=PROJECT_ROOT)
+
+
 MENU_ACTIONS: List[MenuAction] = [
     MenuAction("initial_setup", "Initial Setup", _build_initial_setup),
     MenuAction("sanity_check", "Sanity Check", _build_sanity_check),
+    MenuAction("configuration", "Configuration", _build_configuration),
 ]
 
 
