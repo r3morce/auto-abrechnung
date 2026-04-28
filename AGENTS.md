@@ -17,8 +17,8 @@ Two independent modes:
 
 ## Project Structure
 
-- `bank.py` — Entry point for bank-statement processing
-- `paper.py` — Entry point for personal-expense settlement
+- `bank.py` — Thin CLI wrapper around `modules/bank_runner.py`
+- `paper.py` — Thin CLI wrapper around `modules/paper_runner.py`
 - `tui/` — Textual-based TUI shell. UI only, no business logic.
   - `app.py` — `AbrechnungApp` (top-level `App`)
   - `__main__.py` — entry point for `python3 -m tui` / `make tui`
@@ -28,6 +28,10 @@ Two independent modes:
     thread so the UI stays responsive
   - `screens/config_overview.py` — read-only `ConfigOverviewScreen`
     listing all known config files and their parsed values
+  - `screens/wizard/mode_select.py` — step 1 of the new-settlement wizard
+  - `screens/wizard/preview.py` — step 2: config + input + CSV preview
+  - `screens/wizard/result.py` — step 3: run + results +
+    "Ordner oeffnen" via `xdg-open`
   - `screens/placeholder.py` — fallback screen for not-yet-wired actions
 - `modules/` — Core business logic
   - `environment.py` — Headless API for initial setup and sanity check
@@ -38,6 +42,11 @@ Two independent modes:
     (`load_config_overview`, `ConfigOverview`, `ConfigSection`,
     `ConfigEntry`). Reuses `ItemStatus` / `OverallStatus` from
     `environment.py`.
+  - `bank_runner.py` — Headless API wrapping the bank pipeline:
+    `preview_bank`, `run_bank_settlement`, `BankPreview`, `BankRunResult`.
+  - `paper_runner.py` — Headless API wrapping the paper pipeline:
+    `preview_paper`, `run_paper_settlement`, `PaperPreview`,
+    `PaperRunResult`.
   - `csv_reader.py` — Reads/parses bank CSV files
   - `expense_reader.py` — Reads personal-expense CSVs (year/month header + rows)
   - `filters.py` — Allowlist/blocklist filtering

@@ -52,7 +52,10 @@ feature files under `specs/features/`, set the active phase here, then
 start implementation per `workflow.md`.
 
 ## Active phase
-_None — Phase 4 complete._
+_None — Phase 5 complete._
+
+## Tasks — Phase 5
+_All tasks done; see Done section below._
 
 ## Tasks — Phase 4
 _All tasks done; see Done section below._
@@ -63,7 +66,8 @@ _All tasks done; see Done section below._
 | 1     | Core API (headless)         | done   |
 | 2     | TUI skeleton                | done   |
 | 3     | Wire TUI to API             | done   |
-| 4     | Config overview (read-only) | done   |
+| 4     | Config overview (read-only) | done        |
+| 5     | New-settlement wizard       | done        |
 
 ## Tasks — Phase 3
 _All tasks done; see Done section below._
@@ -90,6 +94,31 @@ _All tasks done; see Done section below._
   pytest once venv is rebuilt.
 - T1.5 — `AGENTS.md` updated: documents `modules/environment.py` API and the
   new `tests/` layout + `make test`.
+
+## Phase 5 — Done
+- T5.1/T5.2 — `modules/bank_runner.py` and `modules/paper_runner.py` with
+  `preview_*` and `run_*_settlement` plus result dataclasses
+  (`BankPreview`, `BankRunResult`, `PaperPreview`, `PaperRunResult`).
+  Both `chdir` into `project_root` and capture stdout from the legacy
+  modules; never raise.
+- T5.3 — 9 unit tests in `tests/test_runners.py` covering preview happy /
+  no-input / missing-config and run happy / no-input / invalid-csv.
+- T5.4 — `bank.py` and `paper.py` rewritten as thin CLI wrappers around
+  the runners; console output preserved.
+- T5.5 — Wizard screens under `tui/screens/wizard/`:
+  `mode_select.py`, `preview.py`, `result.py`. Preview disables the
+  "Starten" button when no input file is found. Result screen offers
+  "Ordner oeffnen" via `xdg-open` (best-effort).
+- T5.6 — "Neue Abrechnung" added as the **first** menu entry; existing
+  TUI tests adjusted (action_index +1).
+- T5.7 — 3 e2e TUI tests in `tests/test_tui_wizard.py` (paper happy path,
+  bank no-input disables start, escape returns to mode select).
+- T5.8 — `AGENTS.md` updated with new modules and screens.
+
+Definition of Done met:
+- All scenarios in feature 05 covered by automated tests (34/34 green).
+- `bank.py` / `paper.py` console behaviour unchanged.
+- No business logic in `tui/`; the wizard only consumes the runner APIs.
 
 ## Phase 4 — Done
 - T4.1 — `modules/config_overview.py` with `load_config_overview`,
@@ -185,6 +214,15 @@ Definition of Done met:
 - 2026-04-28 — `Screen._render` is reserved by Textual; custom render
   methods on screens must use a different name (e.g. `_render_overview`,
   `_render_report`).
+- 2026-04-28 — Phase 5: legacy `bank.py` / `paper.py` refactored into
+  thin CLI shims around new headless runners. Runners use a `chdir`
+  context manager so the unchanged legacy modules keep finding their
+  relative paths; stdout is captured to keep the TUI clean.
+- 2026-04-28 — Wizard adds "Neue Abrechnung" as the first menu entry;
+  reordering required updating action_index in two existing tests.
+- 2026-04-28 — "Ordner oeffnen" uses `xdg-open` via
+  `subprocess.Popen(start_new_session=True)` so the launched file
+  manager doesn't inherit the TUI's terminal.
 
 ## Open Questions
 _(none)_
