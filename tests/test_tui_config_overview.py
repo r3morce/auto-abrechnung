@@ -26,12 +26,11 @@ async def test_configuration_menu_renders_config_values(tmp_path: Path):
         await pilot.pause()
 
         list_view = app.screen.query_one("#menu-list", ListView)
-        # Configuration is the fourth entry (index 3) after "Neue Abrechnung".
-        await pilot.press("down")
-        await pilot.press("down")
-        await pilot.press("down")
+        # Configuration is the fifth entry (index 4): NeueAbr, Paper, Setup, Sanity, Config.
+        for _ in range(4):
+            await pilot.press("down")
         await pilot.pause()
-        assert list_view.index == 3
+        assert list_view.index == 4
 
         await pilot.press("enter")
         for _ in range(50):
