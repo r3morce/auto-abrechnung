@@ -2,11 +2,12 @@
 
 ## Context Engineering
 Before any work, read in this order:
-1. `specs/status.md` — current phase, open tasks, decisions
-2. `specs/workflow.md` — how to work, Definition of Done
-3. Active phase file under `specs/phases/`
-4. Referenced `.feature` files under `specs/features/` (acceptance criteria)
-5. `specs/requirements.md` for the big picture
+1. **`specs/handover.md`** — high-level project snapshot for new agents
+2. `specs/status.md` — live state: active phase, open tasks, decisions
+3. `specs/workflow.md` — how to work, Definition of Done, commit style
+4. Active phase file under `specs/phases/`
+5. Referenced `.feature` files under `specs/features/` (acceptance criteria)
+6. `specs/requirements.md` for the original big picture
 
 The agent auto-updates `specs/status.md` per `workflow.md`.
 
