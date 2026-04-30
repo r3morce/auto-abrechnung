@@ -31,6 +31,22 @@ class PaperPreview:
 
 
 @dataclass(frozen=True)
+class PaperCalculation:
+    status: ItemStatus
+    reason: str = ""
+    input_file: Optional[Path] = None
+    year: int = 0
+    month: int = 0
+    person_a_total: float = 0.0
+    person_m_total: float = 0.0
+    grand_total: float = 0.0
+    amount_per_person: float = 0.0
+    payer: Optional[str] = None
+    recipient: Optional[str] = None
+    reimbursement_amount: float = 0.0
+
+
+@dataclass(frozen=True)
 class PaperRunResult:
     status: ItemStatus  # OK | ERROR
     reason: str = ""
@@ -113,7 +129,45 @@ def preview_paper(project_root: Path) -> PaperPreview:
     )
 
 
-def run_paper_settlement(project_root: Path) -> PaperRunResult:
+def calculate_paper(project_root: Path, input_file: Path | None = None) -> PaperCalculation:
+    """Read CSV, compute settlement. Never writes files."""
+    from modules.expense_reader import ExpenseReader
+    from modules.settlement import calculate_person_settlement
+
+    buffer = io.StringIO()
+    try:
+        with _chdir(project_root), contextlib.redirect_stdout(buffer):
+            cfg = _load_yaml(project_root / CONFIG_FILE)
+            delimiter = cfg.get("csv_delimiter", ";") or ";"
+            valid_persons = cfg.get("valid_persons") or ["a", "b"]
+            input_folder = project_root / str(cfg.get("input_folder", "input/paper"))
+
+            target = input_file or _find_latest_csv(input_folder)
+            if target is None:
+                return PaperCalculation(status=ItemStatus.ERROR, reason="Keine Eingabedatei gefunden")
+
+            reader = ExpenseReader(valid_persons=valid_persons, delimiter=delimiter)
+            year, month, expenses = reader.read_csv(str(target))
+            settlement = calculate_person_settlement(expenses)
+            reimbursement = settlement.get("reimbursement", {}) or {}
+            return PaperCalculation(
+                status=ItemStatus.OK,
+                input_file=target,
+                year=int(year),
+                month=int(month),
+                person_a_total=settlement["person_a_total"],
+                person_m_total=settlement["person_m_total"],
+                grand_total=settlement["grand_total"],
+                amount_per_person=settlement["amount_per_person"],
+                payer=reimbursement.get("payer"),
+                recipient=reimbursement.get("recipient"),
+                reimbursement_amount=reimbursement.get("amount", 0.0),
+            )
+    except Exception as exc:  # noqa: BLE001
+        return PaperCalculation(status=ItemStatus.ERROR, reason=f"{type(exc).__name__}: {exc}")
+
+
+def run_paper_settlement(project_root: Path, input_file: Path | None = None) -> PaperRunResult:
     """Execute the paper settlement headlessly. Captures stdout; never raises."""
     from modules.expense_reader import ExpenseReader
     from modules.report_writer import PersonReportWriter
@@ -128,7 +182,7 @@ def run_paper_settlement(project_root: Path) -> PaperRunResult:
             delimiter = cfg.get("csv_delimiter", ";") or ";"
             valid_persons = cfg.get("valid_persons") or ["a", "b"]
 
-            latest = _find_latest_csv(input_folder)
+            latest = input_file or _find_latest_csv(input_folder)
             if latest is None:
                 return PaperRunResult(status=ItemStatus.ERROR, reason="Keine Eingabedatei gefunden")
 

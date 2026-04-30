@@ -59,7 +59,7 @@ async def test_initial_setup_via_tui_creates_everything(tmp_path: Path):
     from tui.app import AbrechnungApp
 
     report, table, _overall = await _run_action(
-        AbrechnungApp(), tmp_path, action_index=2  # 0=Neue Abrechnung, 1=Paper Erfassung
+        AbrechnungApp(), tmp_path, action_index=3  # 0=Bank, 1=Paper, 2=Erfassung, 3=Einrichtung
     )
 
     assert report.overall is OverallStatus.OK
@@ -80,7 +80,7 @@ async def test_sanity_check_via_tui_warns_on_empty_inputs(tmp_path: Path):
     run_initial_setup(tmp_path)  # folders + configs but no CSVs
 
     report, _table, _overall = await _run_action(
-        AbrechnungApp(), tmp_path, action_index=3
+        AbrechnungApp(), tmp_path, action_index=4  # 4=Systemprüfung
     )
 
     assert report.overall is OverallStatus.WARNING
@@ -95,7 +95,7 @@ async def test_sanity_check_via_tui_errors_on_missing_config(tmp_path: Path):
     (tmp_path / "config_bank.yaml").unlink()
 
     report, _table, _overall = await _run_action(
-        AbrechnungApp(), tmp_path, action_index=3
+        AbrechnungApp(), tmp_path, action_index=4  # 4=Systemprüfung
     )
 
     assert report.overall is OverallStatus.ERROR

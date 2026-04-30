@@ -4,9 +4,9 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from modules.bank_runner import preview_bank, run_bank_settlement
+from modules.bank_runner import calculate_bank, preview_bank, run_bank_settlement
 from modules.environment import ItemStatus, run_initial_setup
-from modules.paper_runner import preview_paper, run_paper_settlement
+from modules.paper_runner import calculate_paper, preview_paper, run_paper_settlement
 
 
 # Minimal valid DKB-style CSV header + a couple of rows.
@@ -103,6 +103,34 @@ def test_run_bank_no_input(tmp_path: Path):
     assert "Eingabedatei" in result.reason
 
 
+def test_calculate_bank_happy(tmp_path: Path):
+    _seed_bank(tmp_path)
+    calc = calculate_bank(tmp_path)
+
+    assert calc.status is ItemStatus.OK, calc.reason
+    assert calc.total_expenses == 45.5
+    assert calc.total_income == 2500.0
+    assert calc.net_expenses == 45.5 - 2500.0
+    assert calc.amount_per_person == calc.net_expenses / 2
+    assert calc.input_file is not None
+
+
+def test_calculate_bank_no_input(tmp_path: Path):
+    run_initial_setup(tmp_path)
+    calc = calculate_bank(tmp_path)
+
+    assert calc.status is ItemStatus.ERROR
+    assert "Eingabedatei" in calc.reason
+
+
+def test_calculate_bank_missing_config(tmp_path: Path):
+    run_initial_setup(tmp_path)
+    (tmp_path / "config_bank.yaml").unlink()
+    calc = calculate_bank(tmp_path)
+
+    assert calc.status is ItemStatus.ERROR
+
+
 # ---------- paper ----------
 
 
@@ -146,3 +174,33 @@ def test_run_paper_invalid_csv(tmp_path: Path):
 
     assert result.status is ItemStatus.ERROR
     assert result.reason  # some explanation
+
+
+def test_calculate_paper_happy(tmp_path: Path):
+    _seed_paper(tmp_path)
+    calc = calculate_paper(tmp_path)
+
+    assert calc.status is ItemStatus.OK, calc.reason
+    assert calc.person_a_total == 45.5
+    assert calc.grand_total == 45.5 + 120.0
+    assert calc.amount_per_person == calc.grand_total / 2
+    assert calc.year == 2025
+    assert calc.month == 11
+    assert calc.input_file is not None
+
+
+def test_calculate_paper_explicit_file(tmp_path: Path):
+    _seed_paper(tmp_path)
+    explicit = tmp_path / "input/paper/2025-11.csv"
+    calc = calculate_paper(tmp_path, input_file=explicit)
+
+    assert calc.status is ItemStatus.OK
+    assert calc.input_file == explicit
+
+
+def test_calculate_paper_no_input(tmp_path: Path):
+    run_initial_setup(tmp_path)
+    calc = calculate_paper(tmp_path)
+
+    assert calc.status is ItemStatus.ERROR
+    assert "Eingabedatei" in calc.reason

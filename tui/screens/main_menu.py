@@ -1,9 +1,4 @@
-"""Main menu screen.
-
-Acceptance criteria: see specs/features/01-main-menu.feature.
-The menu shows action entries; selecting one pushes a placeholder screen.
-Wire-up to the real API happens in Phase 3.
-"""
+"""Main menu screen."""
 
 from __future__ import annotations
 
@@ -21,10 +16,8 @@ from modules.environment import run_initial_setup, run_sanity_check
 from tui.screens.config_overview import ConfigOverviewScreen
 from tui.screens.paper_entry import PaperEntryScreen
 from tui.screens.result import ResultScreen
-from tui.screens.wizard.mode_select import ModeSelectScreen
+from tui.screens.wizard.preview import PreviewScreen
 
-# Project root used for all environment actions. The TUI is launched from the
-# project root (`make tui` / `python3 -m tui`), so cwd is the right anchor.
 PROJECT_ROOT = Path.cwd()
 
 
@@ -33,13 +26,26 @@ class MenuAction:
     """A selectable entry in the main menu."""
 
     key: str
-    label: str  # German user-facing label
+    label: str
+    subtitle: str
     builder: Callable[[], Screen]
+
+
+def _build_bank_abrechnung() -> Screen:
+    return PreviewScreen(mode="bank", project_root=PROJECT_ROOT)
+
+
+def _build_paper_abrechnung() -> Screen:
+    return PreviewScreen(mode="paper", project_root=PROJECT_ROOT)
+
+
+def _build_paper_entry() -> Screen:
+    return PaperEntryScreen(project_root=PROJECT_ROOT)
 
 
 def _build_initial_setup() -> Screen:
     return ResultScreen(
-        title="Initial Setup",
+        title="Einrichtung",
         factory=run_initial_setup,
         project_root=PROJECT_ROOT,
     )
@@ -47,7 +53,7 @@ def _build_initial_setup() -> Screen:
 
 def _build_sanity_check() -> Screen:
     return ResultScreen(
-        title="Sanity Check",
+        title="Systemprüfung",
         factory=run_sanity_check,
         project_root=PROJECT_ROOT,
     )
@@ -57,21 +63,47 @@ def _build_configuration() -> Screen:
     return ConfigOverviewScreen(project_root=PROJECT_ROOT)
 
 
-def _build_new_abrechnung() -> Screen:
-    return ModeSelectScreen(project_root=PROJECT_ROOT)
-
-
-def _build_paper_entry() -> Screen:
-    return PaperEntryScreen(project_root=PROJECT_ROOT)
-
-
 MENU_ACTIONS: List[MenuAction] = [
-    MenuAction("new_abrechnung", "Neue Abrechnung", _build_new_abrechnung),
-    MenuAction("paper_entry", "Paper Erfassung", _build_paper_entry),
-    MenuAction("initial_setup", "Initial Setup", _build_initial_setup),
-    MenuAction("sanity_check", "Sanity Check", _build_sanity_check),
-    MenuAction("configuration", "Configuration", _build_configuration),
+    MenuAction(
+        "bank_abrechnung",
+        "Bank-Abrechnung",
+        "Kontoauszug aus input/bank/ verarbeiten und aufteilen",
+        _build_bank_abrechnung,
+    ),
+    MenuAction(
+        "paper_abrechnung",
+        "Ausgaben-Abrechnung",
+        "Manuelle Ausgaben aus input/paper/ aufteilen",
+        _build_paper_abrechnung,
+    ),
+    MenuAction(
+        "paper_entry",
+        "Ausgaben erfassen",
+        "Manuelle Ausgaben für einen Monat eingeben und speichern",
+        _build_paper_entry,
+    ),
+    MenuAction(
+        "initial_setup",
+        "Einrichtung",
+        "Verzeichnisse und Beispielkonfigurationen anlegen",
+        _build_initial_setup,
+    ),
+    MenuAction(
+        "sanity_check",
+        "Systemprüfung",
+        "Konfiguration und Eingabedateien auf Vollständigkeit prüfen",
+        _build_sanity_check,
+    ),
+    MenuAction(
+        "configuration",
+        "Einstellungen",
+        "Aktuelle Konfigurationsdateien und Filterlisten anzeigen",
+        _build_configuration,
+    ),
 ]
+
+# Index of the last item in the workflow section (before the admin divider).
+_DIVIDER_AFTER = 2
 
 
 class MainMenuScreen(Screen):
@@ -87,7 +119,7 @@ class MainMenuScreen(Screen):
         align: center middle;
     }
     #menu-box {
-        width: 60;
+        width: 72;
         height: auto;
         border: round $accent;
         padding: 1 2;
@@ -100,6 +132,18 @@ class MainMenuScreen(Screen):
     ListView {
         height: auto;
     }
+    .menu-label {
+        text-style: bold;
+    }
+    .menu-subtitle {
+        color: $text-muted;
+        padding-bottom: 1;
+    }
+    .menu-section-end {
+        border-bottom: solid $accent;
+        padding-bottom: 1;
+        margin-bottom: 1;
+    }
     """
 
     def compose(self) -> ComposeResult:
@@ -108,15 +152,19 @@ class MainMenuScreen(Screen):
             yield Label("Auto-Abrechnung", id="menu-title")
             yield ListView(
                 *[
-                    ListItem(Label(action.label), id=f"action-{action.key}")
-                    for action in MENU_ACTIONS
+                    ListItem(
+                        Label(action.label, classes="menu-label"),
+                        Label(action.subtitle, classes="menu-subtitle"),
+                        id=f"action-{action.key}",
+                        classes="menu-section-end" if idx == _DIVIDER_AFTER else "",
+                    )
+                    for idx, action in enumerate(MENU_ACTIONS)
                 ],
                 id="menu-list",
             )
         yield Footer()
 
     def on_mount(self) -> None:
-        # Focus the first action so arrow keys work immediately.
         list_view = self.query_one("#menu-list", ListView)
         list_view.focus()
         list_view.index = 0

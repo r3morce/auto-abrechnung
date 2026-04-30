@@ -37,6 +37,17 @@ class BankPreview:
 
 
 @dataclass(frozen=True)
+class BankCalculation:
+    status: ItemStatus
+    reason: str = ""
+    input_file: Optional[Path] = None
+    total_expenses: float = 0.0
+    total_income: float = 0.0
+    net_expenses: float = 0.0
+    amount_per_person: float = 0.0
+
+
+@dataclass(frozen=True)
 class BankRunResult:
     status: ItemStatus  # OK | ERROR
     reason: str = ""
@@ -134,7 +145,49 @@ def preview_bank(project_root: Path) -> BankPreview:
     )
 
 
-def run_bank_settlement(project_root: Path) -> BankRunResult:
+def calculate_bank(project_root: Path, input_file: Path | None = None) -> BankCalculation:
+    """Read CSV, apply filters, compute totals. Never writes files."""
+    from modules.csv_reader import BankStatementReader
+    from modules.filters import filter_transactions
+    from modules.settlement import calculate_bank_settlement
+    from config.settings import Settings
+
+    buffer = io.StringIO()
+    try:
+        with _chdir(project_root), contextlib.redirect_stdout(buffer):
+            cfg = _load_yaml(project_root / CONFIG_FILE)
+            delimiter = cfg.get("csv_delimiter", ";") or ";"
+            input_folder = project_root / str(cfg.get("input_folder", "input/bank"))
+
+            target = input_file or _find_latest_csv(input_folder)
+            if target is None:
+                return BankCalculation(status=ItemStatus.ERROR, reason="Keine Eingabedatei gefunden")
+
+            settings = Settings()
+            reader = BankStatementReader(delimiter=delimiter)
+            transactions = reader.read_csv(str(target))
+            filtered = filter_transactions(
+                transactions, settings.income_allow_list, settings.expense_block_list
+            )
+            if not filtered:
+                return BankCalculation(
+                    status=ItemStatus.ERROR, reason="Keine relevanten Transaktionen nach Filter"
+                )
+
+            settlement = calculate_bank_settlement(filtered)
+            return BankCalculation(
+                status=ItemStatus.OK,
+                input_file=target,
+                total_expenses=settlement["total_expenses"],
+                total_income=settlement["total_income"],
+                net_expenses=settlement["net_expenses"],
+                amount_per_person=settlement["amount_per_person"],
+            )
+    except Exception as exc:  # noqa: BLE001
+        return BankCalculation(status=ItemStatus.ERROR, reason=f"{type(exc).__name__}: {exc}")
+
+
+def run_bank_settlement(project_root: Path, input_file: Path | None = None) -> BankRunResult:
     """Execute the bank settlement headlessly. Captures stdout; never raises."""
     # Lazy imports so unit tests for the API don't pull all of textual etc.
     from modules.csv_exporter import CsvExporter
@@ -152,7 +205,7 @@ def run_bank_settlement(project_root: Path) -> BankRunResult:
             output_folder = project_root / str(cfg.get("output_folder", "output/bank"))
             delimiter = cfg.get("csv_delimiter", ";") or ";"
 
-            latest = _find_latest_csv(input_folder)
+            latest = input_file or _find_latest_csv(input_folder)
             if latest is None:
                 return BankRunResult(
                     status=ItemStatus.ERROR,

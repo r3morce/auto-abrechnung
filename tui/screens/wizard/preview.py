@@ -20,7 +20,7 @@ from textual.worker import Worker, WorkerState
 from modules.bank_runner import BankPreview, preview_bank
 from modules.environment import ItemStatus
 from modules.paper_runner import PaperPreview, preview_paper
-from tui.screens.wizard.result import ResultWizardScreen
+from tui.screens.wizard.calculation import CalculationScreen
 
 PreviewType = Union[BankPreview, PaperPreview]
 
@@ -71,9 +71,10 @@ class PreviewScreen(Screen):
         self._preview: PreviewType | None = None
 
     def compose(self) -> ComposeResult:
+        mode_label = "Bank-Abrechnung" if self._mode == "bank" else "Ausgaben-Abrechnung"
         yield Header(show_clock=False)
         with Vertical(id="prev-box"):
-            yield Label(f"Vorschau — {self._mode.capitalize()}", id="prev-title")
+            yield Label(f"Vorschau — {mode_label}", id="prev-title")
             yield Label("", id="prev-status")
             yield LoadingIndicator(id="prev-loading")
             table = DataTable(id="prev-table", zebra_stripes=True, cursor_type="row")
@@ -185,7 +186,11 @@ class PreviewScreen(Screen):
         if self._preview.status is not ItemStatus.OK:
             return
         self.app.push_screen(
-            ResultWizardScreen(mode=self._mode, project_root=self._project_root)
+            CalculationScreen(
+                mode=self._mode,
+                project_root=self._project_root,
+                input_file=self._preview.input_file,
+            )
         )
 
 

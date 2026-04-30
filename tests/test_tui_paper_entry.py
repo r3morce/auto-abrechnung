@@ -31,8 +31,9 @@ async def test_paper_entry_loads_existing_and_adds_row(tmp_path: Path):
         main_menu_mod.PROJECT_ROOT = tmp_path
         await pilot.pause()
 
-        # Navigate to "Paper Erfassung" (second entry, index 1)
+        # Navigate to "Ausgaben erfassen" (index 2)
         list_view = app.screen.query_one("#menu-list", ListView)
+        await pilot.press("down")
         await pilot.press("down")
         await pilot.press("enter")
         await pilot.pause()
@@ -82,6 +83,7 @@ async def test_paper_entry_save_writes_file_and_backup(tmp_path: Path):
         main_menu_mod.PROJECT_ROOT = tmp_path
         await pilot.pause()
         await pilot.press("down")
+        await pilot.press("down")
         await pilot.press("enter")
         await pilot.pause()
         assert isinstance(app.screen, PaperEntryScreen)
@@ -123,6 +125,7 @@ async def test_paper_entry_invalid_person_shows_error(tmp_path: Path):
     async with app.run_test() as pilot:
         main_menu_mod.PROJECT_ROOT = tmp_path
         await pilot.pause()
+        await pilot.press("down")
         await pilot.press("down")
         await pilot.press("enter")
         await pilot.pause()

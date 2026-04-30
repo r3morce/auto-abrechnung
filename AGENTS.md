@@ -23,16 +23,15 @@ Two independent modes:
 - `tui/` — Textual-based TUI shell. UI only, no business logic.
   - `app.py` — `AbrechnungApp` (top-level `App`)
   - `__main__.py` — entry point for `python3 -m tui` / `make tui`
-  - `screens/main_menu.py` — main menu (`MainMenuScreen`, `MENU_ACTIONS`)
+  - `screens/main_menu.py` — main menu (`MainMenuScreen`, `MENU_ACTIONS`); each `MenuAction` has `key`, `label`, `subtitle`, `builder`
   - `screens/result.py` — generic `ResultScreen` rendering `SetupReport` /
     `SanityReport` via `DataTable`; runs the factory in a Textual worker
     thread so the UI stays responsive
   - `screens/config_overview.py` — read-only `ConfigOverviewScreen`
     listing all known config files and their parsed values
-  - `screens/wizard/mode_select.py` — step 1 of the new-settlement wizard
-  - `screens/wizard/preview.py` — step 2: config + input + CSV preview
-  - `screens/wizard/result.py` — step 3: run + results +
-    "Ordner oeffnen" via `xdg-open`
+  - `screens/wizard/preview.py` — step 1: config + input + CSV preview (direkt aus dem Hauptmenü erreichbar)
+  - `screens/wizard/calculation.py` — step 2: berechnet Ergebnis (kein Schreiben), zeigt Zahlen, "Speichern" schreibt dann die Dateien
+  - `screens/wizard/result.py` — nur noch von `PaperEntryScreen` genutzt ("Speichern & Abrechnen")
   - `screens/paper_entry.py` — form-based editor for
     `input/paper/YY-MM.csv` (auto-loads existing month, validates rows,
     "Speichern" with backup, "Speichern & Abrechnen" pushes the wizard
@@ -48,10 +47,11 @@ Two independent modes:
     `ConfigEntry`). Reuses `ItemStatus` / `OverallStatus` from
     `environment.py`.
   - `bank_runner.py` — Headless API wrapping the bank pipeline:
-    `preview_bank`, `run_bank_settlement`, `BankPreview`, `BankRunResult`.
+    `preview_bank`, `calculate_bank`, `run_bank_settlement`,
+    `BankPreview`, `BankCalculation`, `BankRunResult`.
   - `paper_runner.py` — Headless API wrapping the paper pipeline:
-    `preview_paper`, `run_paper_settlement`, `PaperPreview`,
-    `PaperRunResult`.
+    `preview_paper`, `calculate_paper`, `run_paper_settlement`,
+    `PaperPreview`, `PaperCalculation`, `PaperRunResult`.
   - `paper_entry.py` — Headless API for manual paper-expense entry:
     `csv_path_for`, `load_paper_csv`, `save_paper_csv`, `validate_row`,
     `parse_amount`, `PaperRow`, `LoadResult`, `SaveResult`. Saves files
@@ -69,8 +69,8 @@ Two independent modes:
   - `blocklist.yaml` — Expense recipients to exclude (user-created)
 - `config_bank.yaml` / `config_bank.example.yaml` — Bank-mode config
 - `config_paper.yaml` / `config_paper.example.yaml` — Paper-mode config
-- `input/bank/`, `input/paper/` — Input CSVs (not versioned)
-- `output/bank/`, `output/paper/` — Generated reports/exports incl. `archiv/` (not versioned)
+- `input-paper/` — Paper-mode input CSVs (not versioned; bank reads from `~/Downloads/` via config)
+- Outputs gehen via config nach Dropbox (`output_folder` in `config_paper.yaml` / `config_bank.yaml`)
 
 ## Development Commands
 
@@ -93,7 +93,11 @@ Paper mode:
 - `make paper-run` — Execute `python3 paper.py`
 - `make paper-clean` — Empty paper archive
 
-Note: there are no `make test`, `make lint`, or `make format` targets defined.
+Note: there are no `make lint` or `make format` targets (use Black manually if needed).
+
+## Claude Settings
+
+- `.claude/settings.local.json` — Claudepermissions (allows pytest, make, python3)
 
 ## Code Style
 
@@ -122,7 +126,7 @@ b;120,00;Elektronik
 
 - `PyYAML` (see `requirements.txt`)
 - Standard library: `csv`, `datetime`, `decimal`, `os`, `sys`, `glob`
-- Python 3.7+
+- Python 3.14+
 
 ## Testing
 

@@ -42,10 +42,18 @@ class ResultWizardScreen(Screen):
         border: round $accent;
         padding: 1 2;
     }
-    #res-title { content-align: center middle; text-style: bold; padding-bottom: 1; }
-    #res-status { content-align: center middle; padding-bottom: 1; }
+    #res-title   { content-align: center middle; text-style: bold; padding-bottom: 1; }
+    #res-status  { content-align: center middle; padding-bottom: 1; }
     #res-status.ok  { color: $success; }
     #res-status.err { color: $error;   }
+    #res-summary {
+        content-align: center middle;
+        text-style: bold;
+        color: $success;
+        padding: 1 0;
+        border-bottom: solid $accent;
+        margin-bottom: 1;
+    }
     #res-table { height: 1fr; }
     #res-buttons { height: auto; align-horizontal: center; padding-top: 1; }
     Button { margin: 0 1; }
@@ -58,11 +66,15 @@ class ResultWizardScreen(Screen):
         self._result: RunResult | None = None
 
     def compose(self) -> ComposeResult:
+        mode_label = "Bank" if self._mode == "bank" else "Ausgaben"
         yield Header(show_clock=False)
         with Vertical(id="res-box"):
-            yield Label(f"Ergebnis — {self._mode.capitalize()}", id="res-title")
+            yield Label(f"Ergebnis — {mode_label}", id="res-title")
             yield Label("", id="res-status")
             yield LoadingIndicator(id="res-loading")
+            summary = Label("", id="res-summary")
+            summary.display = False
+            yield summary
             table = DataTable(id="res-table", zebra_stripes=True, cursor_type="row")
             table.display = False
             yield table
@@ -101,6 +113,11 @@ class ResultWizardScreen(Screen):
             status.update(f"FEHLER: {result.reason}")
             status.set_classes("err")
 
+        if result.status is ItemStatus.OK:
+            summary = self.query_one("#res-summary", Label)
+            summary.update(self._build_summary(result))
+            summary.display = True
+
         table = self.query_one("#res-table", DataTable)
         table.display = True
         for section, key, value in self._build_rows(result):
@@ -119,6 +136,17 @@ class ResultWizardScreen(Screen):
         status = self.query_one("#res-status", Label)
         status.update(f"Unerwarteter Fehler: {error!r}")
         status.set_classes("err")
+
+    def _build_summary(self, result: RunResult) -> str:
+        if isinstance(result, BankRunResult):
+            return f"Pro Person: {_eur(result.amount_per_person)}"
+        # PaperRunResult
+        if result.reimbursement_amount > 0 and result.payer and result.recipient:
+            return (
+                f"{result.payer.upper()} zahlt an {result.recipient.upper()}: "
+                f"{_eur(result.reimbursement_amount)}"
+            )
+        return "Ausgeglichen"
 
     def _build_rows(self, result: RunResult) -> List[Tuple[str, str, str]]:
         rows: List[Tuple[str, str, str]] = []
@@ -140,14 +168,6 @@ class ResultWizardScreen(Screen):
                 ("Betraege", "Gesamt", _eur(result.grand_total)),
                 ("Betraege", "Pro Person", _eur(result.amount_per_person)),
             ]
-            if result.reimbursement_amount > 0 and result.payer:
-                rows.append((
-                    "Ausgleichszahlung",
-                    f"{result.payer.upper()} → {result.recipient.upper() if result.recipient else '?'}",
-                    _eur(result.reimbursement_amount),
-                ))
-            else:
-                rows.append(("Ausgleichszahlung", "Status", "keine"))
 
         if result.text_report_path:
             rows.append(("Ausgabedateien", "Text", str(result.text_report_path)))
@@ -160,10 +180,9 @@ class ResultWizardScreen(Screen):
     # --- actions ---
 
     def action_back_to_menu(self) -> None:
-        # Pop result, preview, and mode-select to land back on the main menu.
-        for _ in range(3):
-            if len(self.app.screen_stack) > 1:
-                self.app.pop_screen()
+        from tui.screens.main_menu import MainMenuScreen
+        while len(self.app.screen_stack) > 1 and not isinstance(self.app.screen, MainMenuScreen):
+            self.app.pop_screen()
 
     def action_open_folder(self) -> None:
         self._open_folder()

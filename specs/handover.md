@@ -47,8 +47,8 @@ auto-abrechnung/
 ├── modules/                  # Headless, TUI-agnostic business logic
 │   ├── environment.py        # initial setup + sanity check
 │   ├── config_overview.py    # read-only config view
-│   ├── bank_runner.py        # preview_bank, run_bank_settlement
-│   ├── paper_runner.py       # preview_paper, run_paper_settlement
+│   ├── bank_runner.py        # preview_bank, calculate_bank, run_bank_settlement
+│   ├── paper_runner.py       # preview_paper, calculate_paper, run_paper_settlement
 │   ├── paper_entry.py        # load/save CSV for manual paper entry
 │   ├── csv_reader.py         # legacy: DKB parser           (untouched)
 │   ├── expense_reader.py     # legacy: paper CSV parser     (untouched)
@@ -67,9 +67,9 @@ auto-abrechnung/
 │       ├── config_overview.py
 │       ├── paper_entry.py    # form-based YY-MM.csv editor
 │       └── wizard/           # new-Abrechnung wizard
-│           ├── mode_select.py
-│           ├── preview.py
-│           └── result.py     # ResultWizardScreen
+│           ├── preview.py       # step 1: config + input info
+│           ├── calculation.py   # step 2: calculate → review → save
+│           └── result.py        # ResultWizardScreen (nur PaperEntryScreen)
 ├── tests/                    # pytest, mirrors features 1:1
 ├── specs/                    # context engineering artefacts
 │   ├── requirements.md
@@ -92,25 +92,35 @@ behaviour stays identical.
 
 ---
 
-## 4. What is done (Phases 1–6)
+## 4. What is done (Phases 1–8, 11)
 
-| # | Title                     | What it delivered |
-|---|---------------------------|-------------------|
-| 1 | Core API (headless)       | `environment.py` (initial setup + sanity check) + tests |
-| 2 | TUI skeleton              | Textual app shell, main menu, keybindings |
-| 3 | Wire TUI to API           | `ResultScreen`, worker threads, results rendered |
-| 4 | Config overview           | read-only screen showing all config files + values |
-| 5 | New-settlement wizard     | mode-select → preview → run → result with paths + `xdg-open` |
-| 6 | Manual paper-expense entry| form editor for `YY-MM.csv` with backup + "Speichern & Abrechnen" |
+| #  | Title                      | What it delivered |
+|----|----------------------------|-------------------|
+| 1  | Core API (headless)        | `environment.py` (initial setup + sanity check) + tests |
+| 2  | TUI skeleton               | Textual app shell, main menu, keybindings |
+| 3  | Wire TUI to API            | `ResultScreen`, worker threads, results rendered |
+| 4  | Config overview            | read-only screen showing all config files + values |
+| 5  | New-settlement wizard      | mode-select → preview → run → result with paths + `xdg-open` |
+| 6  | Manual paper-expense entry | form editor for `YY-MM.csv` with backup + "Speichern & Abrechnen" |
+| 7  | UX Phase A                 | German labels throughout, menu subtitles, prominent settlement summary |
+| 8  | Navigation restructuring   | 6-item menu with divider, direct PreviewScreen; `mode_select.py` deleted |
+| 11 | Calculation preview        | `CalculationScreen`: calculate first (no write) → review → "Speichern" writes files |
 
 **TUI main menu** (in this order):
-1. Neue Abrechnung
-2. Paper Erfassung
-3. Initial Setup
-4. Sanity Check
-5. Configuration
 
-**Test coverage:** 55 tests, all green. Each feature file has at least one
+Workflow-Gruppe:
+1. Bank-Abrechnung → direkt zu `PreviewScreen(mode="bank")`
+2. Ausgaben-Abrechnung → direkt zu `PreviewScreen(mode="paper")`
+3. Ausgaben erfassen *(CSS-Trennlinie darunter)*
+
+Admin-Gruppe:
+4. Einrichtung
+5. Systemprüfung
+6. Einstellungen
+
+`tui/screens/wizard/mode_select.py` existiert nicht mehr.
+
+**Test coverage:** 62 tests, all green. Each feature file has at least one
 test file mirroring it.
 
 ---
@@ -118,11 +128,15 @@ test file mirroring it.
 ## 5. How to verify everything
 
 ```bash
-make test       # 55 tests pass
+make test       # 62 tests pass
 make tui        # smoke test the UI manually
 make bank-run   # CLI still works
 make paper-run  # CLI still works
 ```
+
+After Phase 8+11: `make tui` shows six menu entries with divider. Pressing
+"Starten" in PreviewScreen opens `CalculationScreen` — numbers are shown
+without writing files. "Speichern" then writes to Dropbox and shows the paths.
 
 `venv/` was rebuilt with **Python 3.14** (the previous one targeted 3.13,
 which is no longer installed system-wide on the dev machine).

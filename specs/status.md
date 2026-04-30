@@ -1,32 +1,33 @@
 # Status
 
-_Last updated: 2026-04-28_
+_Last updated: 2026-04-29 (Phase 11 complete)_
 
 > Big-picture overview lives in `specs/handover.md`. This file tracks only
 > the live state: active phase, open tasks, decisions, blockers.
 
 ## Active phase
-_None — Phases 1–6 complete. Awaiting user choice for the next phase._
-
-Suggested next phases (from `handover.md`): archive browser, run-history,
-config editor, wizard month picker, polish.
+_None — Phases 1–8 + 11 complete. Phase 9 (Month picker) ist geplant._
 
 ## Phase overview
-| Phase | Title                       | Status |
-|-------|-----------------------------|--------|
-| 1     | Core API (headless)         | done   |
-| 2     | TUI skeleton                | done   |
-| 3     | Wire TUI to API             | done   |
-| 4     | Config overview (read-only) | done   |
-| 5     | New-settlement wizard       | done   |
-| 6     | Manual paper-expense entry  | done   |
+| Phase | Title                                   | Status  |
+|-------|-----------------------------------------|---------|
+| 1     | Core API (headless)                     | done    |
+| 2     | TUI skeleton                            | done    |
+| 3     | Wire TUI to API                         | done    |
+| 4     | Config overview (read-only)             | done    |
+| 5     | New-settlement wizard                   | done    |
+| 6     | Manual paper-expense entry              | done    |
+| 7     | UX Phase A (labels, subtitles, summary) | done    |
+| 8     | Navigation restructuring                | done    |
+| 9     | Month picker for paper settlement       | planned |
+| 11    | Calculation preview before saving       | done    |
 
 ## Open tasks
-_(none — all phases done)_
+_(none — Phase 9 ist geplant aber noch nicht aktiv)_
 
 ## Verification at a glance
-- `make test` → 55 passed
-- `make tui` → starts cleanly, 5 menu entries
+- `make test` → 62 passed
+- `make tui` → starts cleanly, 5 menu entries with German labels and subtitles
 - `make bank-run` / `make paper-run` → unchanged behaviour
 - Working tree: clean, all changes committed
 - venv: Python 3.14 (rebuilt 2026-04-28; previous 3.13 was broken)
@@ -68,6 +69,21 @@ _(none — all phases done)_
 - 2026-04-28 — Year shown 4-digit in the UI, stored 2-digit in the file.
 - 2026-04-28 — `Label.renderable` is not a public attribute in current
   Textual; tests use `str(label.render())`.
+
+- 2026-04-30 — Phase 7: all TUI labels translated to German; `MenuAction` gains
+  a `subtitle` field rendered as a muted second line in each list item; wizard
+  result screen shows the settlement outcome as a bold highlighted label above
+  the detail table (reimbursement row removed from table as redundant).
+- 2026-04-30 — Phase 8: "Neue Abrechnung" replaced by two direct entries
+  (Bank-Abrechnung, Ausgaben-Abrechnung) pointing straight to `PreviewScreen`;
+  `mode_select.py` deleted; back-navigation uses a `while` loop instead of a
+  hardcoded pop count; CSS `border-bottom` divider between workflow and admin
+  sections.
+- 2026-04-29 — Phase 11: `CalculationScreen` added between `PreviewScreen` and
+  file-writing; `calculate_bank` / `calculate_paper` added to runners (read-only);
+  `PaperCalculation.year` / `month` coerced to `int`; `preview.py` now pushes
+  `CalculationScreen` instead of `ResultWizardScreen`; `ResultWizardScreen` kept
+  for `PaperEntryScreen` only.
 
 ## Open Questions
 _(none)_

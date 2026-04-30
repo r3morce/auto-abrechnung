@@ -24,10 +24,15 @@ async def test_app_starts_and_shows_main_menu():
         list_view = app.screen.query_one("#menu-list", ListView)
         # First action focused
         assert list_view.index == 0
-        # Menu lists at least the two required actions
-        labels = {a.label for a in MENU_ACTIONS}
-        assert "Initial Setup" in labels
-        assert "Sanity Check" in labels
+        # Alle sechs Einträge vorhanden, aufgeteilt in zwei Gruppen
+        labels = [a.label for a in MENU_ACTIONS]
+        assert len(labels) == 6
+        assert "Bank-Abrechnung" in labels
+        assert "Ausgaben-Abrechnung" in labels
+        assert "Ausgaben erfassen" in labels
+        assert "Einrichtung" in labels
+        assert "Systemprüfung" in labels
+        assert "Einstellungen" in labels
 
 
 @pytest.mark.asyncio

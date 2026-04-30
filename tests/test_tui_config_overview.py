@@ -26,11 +26,11 @@ async def test_configuration_menu_renders_config_values(tmp_path: Path):
         await pilot.pause()
 
         list_view = app.screen.query_one("#menu-list", ListView)
-        # Configuration is the fifth entry (index 4): NeueAbr, Paper, Setup, Sanity, Config.
-        for _ in range(4):
+        # "Einstellungen" ist Index 5: Bank, Paper-Abr, Erfassung, Einrichtung, Systemprüfung, Einstellungen
+        for _ in range(5):
             await pilot.press("down")
         await pilot.pause()
-        assert list_view.index == 4
+        assert list_view.index == 5
 
         await pilot.press("enter")
         for _ in range(50):
