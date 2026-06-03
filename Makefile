@@ -9,6 +9,8 @@ help:
 	@echo "Verfügbare Commands:"
 	@echo ""
 	@echo "General:"
+	@echo "  tui            - Textual UI starten (empfohlen)"
+	@echo "  test           - Alle Tests ausführen"
 	@echo "  setup          - Komplettes Setup (bank + paper)"
 	@echo "  run            - Beide Abrechnungen ausführen (bank + paper)"
 	@echo "  install        - Dependencies installieren"
@@ -16,13 +18,13 @@ help:
 	@echo ""
 	@echo "Bank Processing:"
 	@echo "  bank-setup     - Bank-Verzeichnisse erstellen"
-	@echo "  bank-run       - Bank-Abrechnung ausführen"
+	@echo "  bank-run       - Bank-Abrechnung ausführen (CLI)"
 	@echo "  bank-clean     - Bank-Archiv leeren"
 	@echo "  bank-archive   - Bank-Output archivieren"
 	@echo ""
 	@echo "Paper Processing:"
 	@echo "  paper-setup    - Paper-Verzeichnisse erstellen"
-	@echo "  paper-run      - Paper-Abrechnung ausführen"
+	@echo "  paper-run      - Paper-Abrechnung ausführen (CLI)"
 	@echo "  paper-clean    - Paper-Archiv leeren"
 
 # Komplettes Setup
@@ -99,7 +101,7 @@ bank-setup:
 
 bank-run:
 	@echo "🏦 Starte Bank-Abrechnung..."
-	python3 bank.py
+	$(PY) bank.py
 
 bank-clean:
 	@echo "🧹 Lösche Bank-Archiv..."
@@ -122,7 +124,7 @@ paper-setup:
 
 paper-run:
 	@echo "💰 Starte Paper-Abrechnung..."
-	python3 paper.py
+	$(PY) paper.py
 
 paper-clean:
 	@echo "🧹 Lösche Paper-Archiv..."
